@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 interface SettingsData {
   trustedContactName:  string;
@@ -44,7 +46,14 @@ export default function SettingsClient({ initial }: { initial: SettingsData }) {
           shareLocation:       form.shareLocation,
         }),
       });
-      if (res.ok) setSaved(true);
+      if (res.ok) {
+        setSaved(true);
+        toast.success('Settings saved');
+      } else {
+        toast.error('Failed to save settings');
+      }
+    } catch {
+      toast.error('Something went wrong');
     } finally {
       setSaving(false);
     }
@@ -54,11 +63,14 @@ export default function SettingsClient({ initial }: { initial: SettingsData }) {
     setTesting(true);
     setTestMsg(null);
     try {
-      // Save first so the test uses latest data
       await handleSave();
       const res  = await fetch('/api/crisis-alert/test', { method: 'POST' });
       const data = await res.json();
       setTestMsg({ ok: data.ok, message: data.message });
+      if (data.ok) toast.success('Test alert sent');
+      else toast.error(data.message || 'Test alert failed');
+    } catch {
+      toast.error('Failed to send test alert');
     } finally {
       setTesting(false);
     }
@@ -101,12 +113,15 @@ export default function SettingsClient({ initial }: { initial: SettingsData }) {
           <h1 style={{ fontSize: 22, fontWeight: 500, marginBottom: 4 }}>Settings</h1>
           <p style={{ fontSize: 14, color: 'var(--color-muted)' }}>Crisis alerts & preferences</p>
         </div>
-        <button
-          onClick={() => router.push('/dashboard')}
-          style={{ fontSize: 13, color: 'var(--color-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
-        >
-          ← Dashboard
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <ThemeToggle size={16} />
+          <button
+            onClick={() => router.push('/dashboard')}
+            style={{ fontSize: 13, color: 'var(--color-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            ← Dashboard
+          </button>
+        </div>
       </div>
 
       {/* Trusted contact */}
@@ -275,6 +290,40 @@ export default function SettingsClient({ initial }: { initial: SettingsData }) {
               </span>
             </a>
           ))}
+        </div>
+      </div>
+
+      {/* Data export */}
+      <div style={card}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: '0.75rem' }}>Your data</h2>
+        <p style={{ fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.6, marginBottom: '1rem' }}>
+          Export all your conversations and journal entries.
+        </p>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <a
+            href="/api/export?format=json"
+            style={{
+              flex: 1, padding: '10px', textAlign: 'center',
+              background: 'var(--color-surface-2)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--color-text)', fontSize: 13, textDecoration: 'none',
+            }}
+          >
+            Export all (JSON)
+          </a>
+          <a
+            href="/api/export?format=csv"
+            style={{
+              flex: 1, padding: '10px', textAlign: 'center',
+              background: 'var(--color-surface-2)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--color-text)', fontSize: 13, textDecoration: 'none',
+            }}
+          >
+            Journal (CSV)
+          </a>
         </div>
       </div>
 

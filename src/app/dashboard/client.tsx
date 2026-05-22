@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { Onboarding } from '@/components/onboarding';
 
 interface Session {
   sessionId: string;
@@ -12,9 +15,16 @@ interface Session {
 
 export default function DashboardClient({ userId, isAdmin }: { userId: number; isAdmin?: boolean }) {
   const router = useRouter();
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading,  setLoading]  = useState(true);
-  const [creating, setCreating] = useState(false);
+  const [sessions,     setSessions]     = useState<Session[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [creating,     setCreating]     = useState(false);
+  const [showOnboard,  setShowOnboard]  = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem('harmony-onboarded')) {
+      setShowOnboard(true);
+    }
+  }, []);
 
   useEffect(() => {
     fetch('/api/sessions')
@@ -27,9 +37,12 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
     setCreating(true);
     try {
       const res  = await fetch('/api/sessions', { method: 'POST' });
+      if (!res.ok) throw new Error();
       const data = await res.json();
+      toast.success('Session started');
       router.push(`/chat/${data.sessionId}`);
     } catch {
+      toast.error('Failed to start session');
       setCreating(false);
     }
   }
@@ -37,6 +50,10 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
+  }
+
+  if (showOnboard) {
+    return <Onboarding onComplete={() => setShowOnboard(false)} />;
   }
 
   return (
@@ -47,30 +64,8 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
           <h1 style={{ fontSize: 22, fontWeight: 500, marginBottom: 4 }}>Your sessions</h1>
           <p style={{ fontSize: 14, color: 'var(--color-muted)' }}>Each conversation is a safe space</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {isAdmin && (
-            <button
-              onClick={() => router.push('/admin')}
-              style={{
-                fontSize: 12, color: 'var(--color-warning)',
-                background: 'rgba(251,191,36,0.08)',
-                border: '1px solid rgba(251,191,36,0.2)',
-                borderRadius: 'var(--radius-sm)',
-                cursor: 'pointer', padding: '5px 10px',
-              }}
-            >
-              Crisis log
-            </button>
-          )}
-          <button
-            onClick={() => router.push('/settings')}
-            style={{
-              fontSize: 13, color: 'var(--color-muted)',
-              background: 'none', border: 'none', cursor: 'pointer', padding: '6px 10px',
-            }}
-          >
-            ⚙ Settings
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <ThemeToggle size={16} />
           <button
             onClick={logout}
             style={{
@@ -82,6 +77,22 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
           </button>
         </div>
       </div>
+
+      {/* Navigation */}
+      <nav style={{
+        display: 'flex', gap: 6, flexWrap: 'wrap',
+        marginBottom: '1.5rem',
+        padding: '10px 0',
+        borderBottom: '1px solid var(--color-border)',
+      }}>
+        {isAdmin && (
+          <NavBtn label="Crisis log" onClick={() => router.push('/admin')} accent />
+        )}
+        <NavBtn label="Progress" onClick={() => router.push('/progress')} />
+        <NavBtn label="Journal" onClick={() => router.push('/journal')} />
+        <NavBtn label="Resources" onClick={() => router.push('/resources')} />
+        <NavBtn label="Settings" onClick={() => router.push('/settings')} />
+      </nav>
 
       {/* New session button */}
       <button
@@ -147,5 +158,25 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
         In crisis? Call iCall: 9152987821.
       </p>
     </main>
+  );
+}
+
+function NavBtn({ label, onClick, accent }: { label: string; onClick: () => void; accent?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        fontSize: 13,
+        color: accent ? 'var(--color-warning)' : 'var(--color-muted)',
+        background: accent ? 'rgba(251,191,36,0.08)' : 'var(--color-surface)',
+        border: accent ? '1px solid rgba(251,191,36,0.2)' : '1px solid var(--color-border)',
+        borderRadius: 'var(--radius-sm)',
+        cursor: 'pointer',
+        padding: '6px 14px',
+        transition: 'all 0.15s',
+      }}
+    >
+      {label}
+    </button>
   );
 }

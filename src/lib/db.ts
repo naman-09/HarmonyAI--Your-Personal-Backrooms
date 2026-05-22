@@ -8,6 +8,7 @@ import {
   boolean,
   timestamp,
   jsonb,
+  index,
 } from 'drizzle-orm/pg-core';
 
 // ─── Tables ──────────────────────────────────────────────────
@@ -24,40 +25,42 @@ export const sessions = pgTable('sessions', {
   id:              serial('id').primaryKey(),
   userId:          integer('user_id').references(() => users.id).notNull(),
   sessionId:       text('session_id').unique().notNull(),
-  // Array of { timestamp, rage, calm } — emotion timeline across the session
   emotionTimeline: jsonb('emotion_timeline').$type<any[]>().default([]).notNull(),
-  riskLevel:       text('risk_level').default('none').notNull(), // 'none' | 'elevated' | 'crisis'
-  // New tiered crisis level 0–4
+  riskLevel:       text('risk_level').default('none').notNull(),
   crisisLevel:     integer('crisis_level').default(0).notNull(),
-  // Last known { lat, lng } as JSON string; null if not shared or permission denied
   location:        text('location'),
-  // Crisis alerting state
   alertedAt:       timestamp('alerted_at'),
   alertActedOn:    boolean('alert_acted_on').default(false).notNull(),
   isFlagged:       boolean('is_flagged').default(false).notNull(),
   endedAt:         timestamp('ended_at'),
   createdAt:       timestamp('created_at').defaultNow().notNull(),
-});
+}, (t) => ({
+  userIdx: index('sessions_user_id_idx').on(t.userId),
+}));
 
 export const messages = pgTable('messages', {
   id:           serial('id').primaryKey(),
   sessionId:    integer('session_id').references(() => sessions.id).notNull(),
-  role:         text('role').notNull(), // 'user' | 'assistant'
+  role:         text('role').notNull(),
   content:      text('content').notNull(),
   emotionScore: jsonb('emotion_score').$type<{ rage: number; calm: number }>(),
   safetyLevel:  integer('safety_level').default(0).notNull(),
   createdAt:    timestamp('created_at').defaultNow().notNull(),
-});
+}, (t) => ({
+  sessionIdx: index('messages_session_id_idx').on(t.sessionId),
+}));
 
 // Append-only audit log — never update or delete rows here
 export const auditLog = pgTable('audit_log', {
   id:        serial('id').primaryKey(),
   sessionId: text('session_id').notNull(),
   userId:    integer('user_id').notNull(),
-  event:     text('event').notNull(), // e.g. 'crisis_detected', 'crisis_alert_sent'
+  event:     text('event').notNull(),
   metadata:  jsonb('metadata').$type<any>().default({}),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (t) => ({
+  sessionIdx: index('audit_log_session_id_idx').on(t.sessionId),
+}));
 
 // Trusted contact and user preferences for crisis alerting
 export const userSettings = pgTable('user_settings', {
@@ -71,8 +74,19 @@ export const userSettings = pgTable('user_settings', {
   updatedAt:           timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const journalEntries = pgTable('journal_entries', {
+  id:        serial('id').primaryKey(),
+  userId:    integer('user_id').references(() => users.id).notNull(),
+  mood:      integer('mood').notNull(),
+  note:      text('note'),
+  date:      text('date').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => ({
+  userDateIdx: index('journal_user_date_idx').on(t.userId, t.date),
+}));
+
 // ─── DB instance (Neon serverless HTTP) ──────────────────────
 const sql = neon(process.env.DATABASE_URL!);
 export const db = drizzle(sql as any, {
-  schema: { users, sessions, messages, auditLog, userSettings },
+  schema: { users, sessions, messages, auditLog, userSettings, journalEntries },
 });

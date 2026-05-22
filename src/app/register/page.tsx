@@ -133,6 +133,7 @@ export default function RegisterPage() {
                 outline: 'none',
               }}
             />
+            {password && <PasswordStrength password={password} />}
           </div>
 
           {error && (
@@ -168,5 +169,31 @@ export default function RegisterPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+function PasswordStrength({ password }: { password: string }) {
+  const hasLength  = password.length >= 8;
+  const hasNumber  = /\d/.test(password);
+  const hasSpecial = /[^a-zA-Z0-9]/.test(password);
+  const score      = [hasLength, hasNumber, hasSpecial].filter(Boolean).length;
+  const colors     = ['var(--color-danger)', 'var(--color-warning)', 'var(--color-success)'];
+  const labels     = ['Weak', 'Fair', 'Strong'];
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
+        {[0, 1, 2].map((i) => (
+          <div key={i} style={{
+            flex: 1, height: 3, borderRadius: 2,
+            background: i < score ? colors[score - 1] : 'rgba(255,255,255,0.08)',
+            transition: 'background 0.2s',
+          }} />
+        ))}
+      </div>
+      <p style={{ fontSize: 11, color: score > 0 ? colors[score - 1] : 'var(--color-subtle)' }}>
+        {score === 0 ? 'Min 8 chars, 1 number, 1 special character' : labels[score - 1]}
+      </p>
+    </div>
   );
 }

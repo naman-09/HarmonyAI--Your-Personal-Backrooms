@@ -27,6 +27,24 @@
   --radius-xl:  24px;
 }
 
+[data-theme="light"] {
+  --color-bg:        #f5f7fb;
+  --color-surface:   #ffffff;
+  --color-surface-2: #eef1f8;
+  --color-border:    rgba(0,0,0,0.08);
+  --color-border-2:  rgba(0,0,0,0.14);
+
+  --color-text:      #1a1d2e;
+  --color-muted:     #5a6378;
+  --color-subtle:    #8892a8;
+
+  --color-primary:   #4f6fe0;
+  --color-primary-d: #3d5bc9;
+  --color-success:   #16a34a;
+  --color-warning:   #d97706;
+  --color-danger:    #dc2626;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -43,12 +61,31 @@ body {
   color: var(--color-text);
   font-family: var(--font-inter);
   min-height: 100vh;
+  transition: background 0.2s, color 0.2s;
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-border-2); border-radius: 2px; }
+
+/* Skip to content */
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 999;
+  padding: 8px 16px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 14px;
+  text-decoration: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
+.skip-to-content:focus {
+  left: 50%;
+  transform: translateX(-50%);
+}
 
 /* Focus ring */
 :focus-visible {

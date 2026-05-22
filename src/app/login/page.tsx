@@ -147,7 +147,12 @@ export default function LoginPage() {
 
         <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-subtle)', marginTop: '2rem', lineHeight: 1.6 }}>
           Harmony is not a substitute for professional mental health care.
-          If you&apos;re in crisis, call iCall: 9152987821 or 988.
+          If you&apos;re in crisis, call iCall: 9152987821.
+        </p>
+        <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--color-subtle)', marginTop: '1rem' }}>
+          <Link href="/privacy" style={{ color: 'var(--color-subtle)', textDecoration: 'underline' }}>Privacy</Link>
+          {' · '}
+          <Link href="/terms" style={{ color: 'var(--color-subtle)', textDecoration: 'underline' }}>Terms</Link>
         </p>
       </div>
     </main>

@@ -8,6 +8,7 @@ const PUBLIC_API_PATHS = [
   '/api/auth/login',
   '/api/auth/logout',
   '/api/auth/register',
+  '/api/health',
 ];
 
 export async function middleware(req: NextRequest) {
@@ -33,6 +34,7 @@ export async function middleware(req: NextRequest) {
     const res = NextResponse.next();
     res.headers.set('x-user-id',    String(payload.userId));
     res.headers.set('x-user-email', String(payload.email));
+    addSecurityHeaders(res);
     return res;
   } catch {
     if (path.startsWith('/api/')) {
@@ -42,6 +44,13 @@ export async function middleware(req: NextRequest) {
   }
 }
 
+function addSecurityHeaders(res: NextResponse) {
+  res.headers.set('X-Content-Type-Options', 'nosniff');
+  res.headers.set('X-Frame-Options', 'DENY');
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(self)');
+}
+
 export const config = {
   matcher: [
     '/api/:path*',
@@ -49,5 +58,8 @@ export const config = {
     '/chat/:path*',
     '/settings/:path*',
     '/admin/:path*',
+    '/journal/:path*',
+    '/resources/:path*',
+    '/progress/:path*',
   ],
 };

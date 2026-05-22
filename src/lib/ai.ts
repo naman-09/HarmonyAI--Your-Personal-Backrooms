@@ -8,8 +8,11 @@ const client = new OpenAI({
   apiKey:  'ollama',
 });
 
-const MODEL      = process.env.OLLAMA_MODEL      || 'llama3.1:8b';
-const MAX_TOKENS = Number(process.env.OLLAMA_MAX_TOKENS) || 800;
+const MODEL       = process.env.OLLAMA_MODEL       || 'llama3.1:8b';
+const MAX_TOKENS  = Number(process.env.OLLAMA_MAX_TOKENS)  || 800;
+const TEMPERATURE = Number(process.env.OLLAMA_TEMPERATURE) || 0.7;
+const MAX_RETRIES = 2;
+const TIMEOUT_MS  = 30_000;
 
 // ─── System prompt ────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are Harmony, a warm and emotionally intelligent wellness companion. You think quickly, respond naturally, and genuinely care about the person you're talking to.
@@ -185,66 +188,89 @@ export async function* streamHarmonyResponse(
 
   const userContent = noteLines.filter(Boolean).join('\n');
 
-  // 5. Stream from Ollama
-  try {
-    const stream = await client.chat.completions.create({
-      model:      MODEL,
-      max_tokens: MAX_TOKENS,
-      stream:     true,
-      messages:   [
-        { role: 'system', content: SYSTEM_PROMPT },
-        ...contextWindow,
-        { role: 'user',   content: userContent },
-      ],
-    });
+  // 5. Stream from Ollama (with retry + timeout)
+  const apiMessages = [
+    { role: 'system' as const, content: SYSTEM_PROMPT },
+    ...contextWindow,
+    { role: 'user' as const,   content: userContent },
+  ];
 
-    let inputTokens  = 0;
-    let outputTokens = 0;
-    let fullResponse = '';
-
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0]?.delta?.content;
-      if (delta) {
-        fullResponse += delta;
-        yield { type: 'delta', text: delta };
-      }
-
-      if (chunk.usage) {
-        inputTokens  = chunk.usage.prompt_tokens     ?? 0;
-        outputTokens = chunk.usage.completion_tokens ?? 0;
-      }
-    }
-
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const parsed = JSON.parse(fullResponse);
-      if (parsed && typeof parsed === 'object') {
-        let displayText = typeof parsed.response_text === 'string' ? parsed.response_text.trim() : '';
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-        if (!displayText) {
-          if (typeof parsed.validation === 'string' && parsed.validation.trim()) {
-            displayText = parsed.validation.trim();
-          }
-          if (typeof parsed.question === 'string' && parsed.question.trim()) {
-            displayText += (displayText ? '\n\n' : '') + parsed.question.trim();
-          }
+      const stream = await client.chat.completions.create({
+        model:       MODEL,
+        max_tokens:  MAX_TOKENS,
+        temperature: TEMPERATURE,
+        stream:      true,
+        messages:    apiMessages,
+      }, { signal: controller.signal as any });
+
+      let inputTokens  = 0;
+      let outputTokens = 0;
+      let fullResponse = '';
+
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta?.content;
+        if (delta) {
+          fullResponse += delta;
+          yield { type: 'delta', text: delta };
         }
 
-        if (displayText) {
-          yield { type: 'replace', text: displayText };
+        if (chunk.usage) {
+          inputTokens  = chunk.usage.prompt_tokens     ?? 0;
+          outputTokens = chunk.usage.completion_tokens ?? 0;
         }
       }
-    } catch {
-      // Not valid JSON — leave the raw text as-is (already streamed)
+
+      clearTimeout(timeout);
+
+      // Parse JSON response and extract display text
+      try {
+        const parsed = JSON.parse(fullResponse);
+        if (parsed && typeof parsed === 'object') {
+          let displayText = typeof parsed.response_text === 'string' ? parsed.response_text.trim() : '';
+
+          if (!displayText) {
+            if (typeof parsed.validation === 'string' && parsed.validation.trim()) {
+              displayText = parsed.validation.trim();
+            }
+            if (typeof parsed.question === 'string' && parsed.question.trim()) {
+              displayText += (displayText ? '\n\n' : '') + parsed.question.trim();
+            }
+          }
+
+          if (displayText) {
+            yield { type: 'replace', text: displayText };
+          }
+        }
+      } catch {
+        // Not valid JSON — leave the raw text as-is (already streamed)
+      }
+
+      yield {
+        type:        'done',
+        usage:       { input_tokens: inputTokens, output_tokens: outputTokens },
+        safetyLevel: risk.level,
+      };
+      return;
+
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      const isRetryable = message.includes('ECONNREFUSED') ||
+                          message.includes('fetch failed') ||
+                          message.includes('aborted') ||
+                          message.includes('timeout');
+
+      if (isRetryable && attempt < MAX_RETRIES) {
+        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+        continue;
+      }
+
+      yield { type: 'error', message };
+      return;
     }
-
-    yield {
-      type:        'done',
-      usage:       { input_tokens: inputTokens, output_tokens: outputTokens },
-      safetyLevel: risk.level,
-    };
-
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    yield { type: 'error', message };
   }
 }

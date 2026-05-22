@@ -8,8 +8,11 @@ import bcrypt from 'bcryptjs';
 
 const RegisterSchema = z.object({
   email:    z.string().email(),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  name:     z.string().min(1, 'Name is required'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/\d/, 'Password must contain at least 1 number')
+    .regex(/[^a-zA-Z0-9]/, 'Password must contain at least 1 special character'),
+  name:     z.string().min(1, 'Name is required').max(100),
 });
 
 export async function POST(req: NextRequest) {

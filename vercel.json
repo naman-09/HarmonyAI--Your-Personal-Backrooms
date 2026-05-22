@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "ANTHROPIC_API_KEY": "@anthropic-key",
+    "JWT_SECRET": "@jwt-secret",
+    "POSTGRES_URL": "@postgres-url",
+    "UPSTASH_REDIS_REST_URL": "@upstash-redis-url",
+    "UPSTASH_REDIS_REST_TOKEN": "@upstash-redis-token",
+    "CLAUDE_MODEL": "claude-sonnet-4-20250514",
+    "CLAUDE_MAX_TOKENS": "800"
+  }
+}

@@ -1,0 +1,34 @@
+<service>
+	<id>harmonymcrisismonitor.exe</id>
+	<name>HarmonymCrisisMonitor</name>
+	<description>Harmony AI — Background crisis detection and alert service</description>
+	<executable>C:\Program Files\nodejs\node.exe</executable>
+	<argument>-r</argument>
+	<argument>tsx/cjs</argument>
+	<argument>C:\Users\papak\Desktop\harmony-ai\harmony-ai\node_modules\node-windows\lib\wrapper.js</argument>
+	<argument>--file</argument>
+	<argument>C:\Users\papak\Desktop\harmony-ai\harmony-ai\scripts\crisis-monitor.ts</argument>
+	<argument>--scriptoptions=</argument>
+	<argument>--log</argument>
+	<argument>HarmonymCrisisMonitor wrapper</argument>
+	<argument>--grow</argument>
+	<argument>0.25</argument>
+	<argument>--wait</argument>
+	<argument>1</argument>
+	<argument>--maxrestarts</argument>
+	<argument>3</argument>
+	<argument>--abortonerror</argument>
+	<argument>n</argument>
+	<argument>--stopparentfirst</argument>
+	<argument>undefined</argument>
+	<logmode>rotate</logmode>
+	<stoptimeout>30sec</stoptimeout>
+	<env name="DATABASE_URL" value="postgresql://postgresql://neondb_owner:npg_KVfg29sODiwa@ep-round-fog-a1ejap0a.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"/>
+	<env name="FAST2SMS_API_KEY" value="9VqKEQYnWh8MjOfocmwrF16Ti7CXUpStdvPRyH0zkDguIb4BJ5GxYmUw5nTjIdXFoHOiQRkv4zLr2ytl"/>
+	<serviceaccount>
+		<domain>PERCY-JACKSON</domain>
+		<user>LocalSystem</user>
+		<password></password>
+	</serviceaccount>
+	<workingdirectory>C:\Users\papak\Desktop\harmony-ai\harmony-ai</workingdirectory>
+</service>

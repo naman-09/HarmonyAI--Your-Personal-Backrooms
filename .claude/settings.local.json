@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($src = \"C:\\\\Users\\\\papak\\\\Desktop\\\\harmony-ai\\\\harmony-ai\"; $dst = \"C:\\\\Users\\\\papak\\\\Desktop\\\\harmony\"; Get-ChildItem $src -Exclude \"node_modules\",\".next\" | ForEach-Object { Copy-Item -Path $_.FullName -Destination \\(Join-Path $dst $_.Name\\) -Recurse -Force }; Write-Output \"Copied successfully\")",
+      "PowerShell($base = \"https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights\"; $dest = \"C:\\\\Users\\\\papak\\\\Desktop\\\\harmony\\\\public\\\\models\"; $files = @\\(\"tiny_face_detector_model-shard1\",\"tiny_face_detector_model-weights_manifest.json\",\"face_expression_recognition_model-shard1\",\"face_expression_recognition_model-weights_manifest.json\"\\); foreach \\($f in $files\\) { Write-Output \"Downloading $f...\"; Invoke-WebRequest -Uri \"$base/$f\" -OutFile \"$dest\\\\$f\" -UseBasicParsing }; Write-Output \"Done.\")"
+    ]
+  }
+}

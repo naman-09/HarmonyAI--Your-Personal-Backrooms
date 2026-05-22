@@ -2,7 +2,19 @@
   "permissions": {
     "allow": [
       "PowerShell($src = \"C:\\\\Users\\\\papak\\\\Desktop\\\\harmony-ai\\\\harmony-ai\"; $dst = \"C:\\\\Users\\\\papak\\\\Desktop\\\\harmony\"; Get-ChildItem $src -Exclude \"node_modules\",\".next\" | ForEach-Object { Copy-Item -Path $_.FullName -Destination \\(Join-Path $dst $_.Name\\) -Recurse -Force }; Write-Output \"Copied successfully\")",
-      "PowerShell($base = \"https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights\"; $dest = \"C:\\\\Users\\\\papak\\\\Desktop\\\\harmony\\\\public\\\\models\"; $files = @\\(\"tiny_face_detector_model-shard1\",\"tiny_face_detector_model-weights_manifest.json\",\"face_expression_recognition_model-shard1\",\"face_expression_recognition_model-weights_manifest.json\"\\); foreach \\($f in $files\\) { Write-Output \"Downloading $f...\"; Invoke-WebRequest -Uri \"$base/$f\" -OutFile \"$dest\\\\$f\" -UseBasicParsing }; Write-Output \"Done.\")"
+      "PowerShell($base = \"https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights\"; $dest = \"C:\\\\Users\\\\papak\\\\Desktop\\\\harmony\\\\public\\\\models\"; $files = @\\(\"tiny_face_detector_model-shard1\",\"tiny_face_detector_model-weights_manifest.json\",\"face_expression_recognition_model-shard1\",\"face_expression_recognition_model-weights_manifest.json\"\\); foreach \\($f in $files\\) { Write-Output \"Downloading $f...\"; Invoke-WebRequest -Uri \"$base/$f\" -OutFile \"$dest\\\\$f\" -UseBasicParsing }; Write-Output \"Done.\")",
+      "PowerShell(New-Item -ItemType Directory -Path \"C:\\\\Users\\\\papak\\\\Desktop\\\\harmony\\\\src\\\\app\\\\journal\" -Force)",
+      "mcp__Claude_Preview__preview_start",
+      "PowerShell(try { $result = Invoke-WebRequest -Uri \"http://localhost:3000\" -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop; $result.StatusCode } catch { \"Port free\" })",
+      "PowerShell($port = 3000; $conn = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue; if \\($conn\\) { $pids = $conn | Select-Object -ExpandProperty OwningProcess -Unique; foreach \\($pid in $pids\\) { Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue; Write-Output \"Killed PID $pid\" } } else { Write-Output \"No process on port $port\" })",
+      "Bash(npm run *)",
+      "Bash(npx next *)",
+      "Bash(Select-Object -Last 40)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(node -e \"console.log\\(require\\('drizzle-orm/package.json'\\).version\\)\")",
+      "Bash(npm list *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

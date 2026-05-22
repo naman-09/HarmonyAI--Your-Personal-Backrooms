@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { safetyCheck } from './safety';
+import { retrieveContext, formatRAGContext } from './rag';
 import type { EmotionSignals } from './emotion';
 
 // Point the OpenAI client at Ollama's OpenAI-compatible API
@@ -170,7 +171,16 @@ export async function* streamHarmonyResponse(
     // Continue to AI below — the model will respond with compassion
   }
 
-  // 4. Build messages
+  // 4. RAG — retrieve relevant knowledge (non-blocking, graceful fallback)
+  let ragContext = '';
+  try {
+    const ragResults = await retrieveContext(input.text);
+    ragContext = formatRAGContext(ragResults);
+  } catch {
+    // RAG unavailable — continue without it
+  }
+
+  // 5. Build messages
   const contextWindow = input.history.slice(-6);
 
   const noteLines: string[] = [
@@ -186,9 +196,11 @@ export async function* streamHarmonyResponse(
   if (risk.level === 1) noteLines.push(`\nNote: elevated concern detected — respond at safety_level 1 with extra warmth and subtly mention iCall (9152987821)`);
   if (risk.level === 2) noteLines.push(`\nNote: distress detected — respond with maximum compassion, the person is struggling significantly`);
 
+  if (ragContext) noteLines.push(ragContext);
+
   const userContent = noteLines.filter(Boolean).join('\n');
 
-  // 5. Stream from Ollama (with retry + timeout)
+  // 6. Stream from Ollama (with retry + timeout)
   const apiMessages = [
     { role: 'system' as const, content: SYSTEM_PROMPT },
     ...contextWindow,

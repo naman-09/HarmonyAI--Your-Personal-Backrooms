@@ -9,6 +9,7 @@ import {
   timestamp,
   jsonb,
   index,
+  customType,
 } from 'drizzle-orm/pg-core';
 
 // ─── Tables ──────────────────────────────────────────────────

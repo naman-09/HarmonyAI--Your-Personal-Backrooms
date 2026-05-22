@@ -12,7 +12,12 @@
     "db:studio": "dotenv -e .env.local -- drizzle-kit studio",
     "monitor": "dotenv -e .env.local -- tsx scripts/crisis-monitor.ts",
     "monitor:install": "dotenv -e .env.local -- tsx scripts/monitor-service-install.ts",
-    "monitor:uninstall": "dotenv -e .env.local -- tsx scripts/monitor-service-uninstall.ts"
+    "monitor:uninstall": "dotenv -e .env.local -- tsx scripts/monitor-service-uninstall.ts",
+    "rag:download": "dotenv -e .env.local -- tsx scripts/download-datasets.ts",
+    "rag:chunk": "dotenv -e .env.local -- tsx scripts/chunk-documents.ts",
+    "rag:embed": "dotenv -e .env.local -- tsx scripts/embed-documents.ts",
+    "rag:status": "dotenv -e .env.local -- tsx scripts/rag-status.ts",
+    "rag:pipeline": "npm run rag:download && npm run rag:chunk && npm run rag:embed && npm run rag:status"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.9.5",

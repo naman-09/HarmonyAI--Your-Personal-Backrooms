@@ -564,16 +564,6 @@ export default function ChatClient({
 
         {/* ════════════════ LEFT PANEL — Voice ════════════════ */}
         <aside className="side-panel side-panel-left">
-          {/* Back to dashboard — keeps the session active, just navigates away */}
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="panel-section back-card"
-            title="Back to dashboard (session stays active)"
-          >
-            <ArrowLeft size={15} />
-            <span>Back to dashboard</span>
-          </button>
-
           <div className="panel-section">
             <p className="panel-label">🎤 Your voice</p>
             <VoiceBars volume={micVolume} active={micOn} />
@@ -608,6 +598,16 @@ export default function ChatClient({
               {ttsSpeaking ? 'Speaking…' : streaming ? 'Responding…' : ttsEnabled ? 'Voice on' : 'Voice off'}
             </p>
           </div>
+
+          {/* Back to dashboard — keeps the session active, just navigates away */}
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="panel-section back-card back-card-bottom"
+            title="Back to dashboard (session stays active)"
+          >
+            <ArrowLeft size={15} />
+            <span>Back to dashboard</span>
+          </button>
         </aside>
 
         {/* ════════════════ CENTRE — Chat ════════════════ */}
@@ -801,11 +801,10 @@ export default function ChatClient({
           border-radius: var(--radius-lg);
           padding: 1rem;
         }
-        /* Back-to-dashboard card — sits above the voice panel */
+        /* Back-to-dashboard card */
         .back-card {
           display: flex; align-items: center; gap: 8px;
           padding: 11px 14px;
-          margin-bottom: 0.75rem;
           color: var(--color-muted);
           font-size: 13px;
           font-weight: 500;
@@ -815,6 +814,8 @@ export default function ChatClient({
           text-align: left;
           transition: all 0.15s ease;
         }
+        /* Pinned to bottom of the left panel's flex column */
+        .back-card-bottom { margin-top: auto; }
         .back-card:hover {
           color: var(--color-primary);
           border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));

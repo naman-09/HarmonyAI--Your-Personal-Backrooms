@@ -1,8 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { Trash2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Onboarding } from '@/components/onboarding';
 
@@ -19,6 +20,7 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
   const [loading,      setLoading]      = useState(true);
   const [creating,     setCreating]     = useState(false);
   const [showOnboard,  setShowOnboard]  = useState(false);
+  const [deleting,     setDeleting]     = useState<string | null>(null);
 
   useEffect(() => {
     if (!localStorage.getItem('harmony-onboarded')) {
@@ -44,6 +46,21 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
     } catch {
       toast.error('Failed to start session');
       setCreating(false);
+    }
+  }
+
+  async function deleteSession(sessionId: string) {
+    if (!confirm('Delete this conversation? This cannot be undone.')) return;
+    setDeleting(sessionId);
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
+      toast.success('Conversation deleted');
+    } catch {
+      toast.error('Failed to delete conversation');
+    } finally {
+      setDeleting(null);
     }
   }
 
@@ -100,8 +117,8 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
         disabled={creating}
         style={{
           width: '100%', padding: '14px',
-          background: creating ? 'rgba(107,143,255,0.3)' : 'rgba(107,143,255,0.12)',
-          border: '1px dashed rgba(107,143,255,0.4)',
+          background: creating ? 'rgba(200,145,90,0.3)' : 'rgba(200,145,90,0.12)',
+          border: '1px dashed rgba(200,145,90,0.4)',
           borderRadius: 'var(--radius-lg)',
           color: creating ? 'var(--color-muted)' : 'var(--color-primary)',
           fontSize: 14, fontWeight: 500,
@@ -121,34 +138,69 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {sessions.map((s) => (
-            <button
+            <div
               key={s.sessionId}
-              onClick={() => router.push(`/chat/${s.sessionId}`)}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '14px 18px',
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-lg)',
-                color: 'var(--color-text)', fontSize: 14,
-                cursor: 'pointer', textAlign: 'left',
-                transition: 'border-color 0.15s',
-              }}
+              style={{ display: 'flex', alignItems: 'stretch', gap: 8 }}
             >
-              <span>
-                {new Date(s.createdAt).toLocaleDateString('en-IN', {
-                  day: 'numeric', month: 'short', year: 'numeric',
-                  hour: '2-digit', minute: '2-digit',
-                })}
-              </span>
-              <span style={{
-                fontSize: 12, padding: '3px 9px', borderRadius: 999,
-                background: s.endedAt ? 'rgba(255,255,255,0.05)' : 'rgba(107,143,255,0.12)',
-                color:      s.endedAt ? 'var(--color-muted)' : 'var(--color-primary)',
-              }}>
-                {s.endedAt ? 'ended' : 'active'}
-              </span>
-            </button>
+              {/* Main session row */}
+              <button
+                onClick={() => router.push(`/chat/${s.sessionId}`)}
+                style={{
+                  flex: 1,
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '14px 18px',
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-lg)',
+                  color: 'var(--color-text)', fontSize: 14,
+                  cursor: 'pointer', textAlign: 'left',
+                  transition: 'border-color 0.15s',
+                }}
+              >
+                <span>
+                  {new Date(s.createdAt).toLocaleDateString('en-IN', {
+                    day: 'numeric', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit',
+                  })}
+                </span>
+                <span style={{
+                  fontSize: 12, padding: '3px 9px', borderRadius: 999,
+                  background: s.endedAt ? 'rgba(255,255,255,0.05)' : 'rgba(200,145,90,0.12)',
+                  color:      s.endedAt ? 'var(--color-muted)' : 'var(--color-primary)',
+                }}>
+                  {s.endedAt ? 'ended' : 'active'}
+                </span>
+              </button>
+
+              {/* Delete button */}
+              <button
+                onClick={() => deleteSession(s.sessionId)}
+                disabled={deleting === s.sessionId}
+                title="Delete conversation"
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 44, flexShrink: 0,
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-lg)',
+                  color: deleting === s.sessionId ? 'var(--color-subtle)' : 'var(--color-muted)',
+                  cursor: deleting === s.sessionId ? 'not-allowed' : 'pointer',
+                  transition: 'color 0.15s, border-color 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  if (deleting !== s.sessionId) {
+                    (e.currentTarget as HTMLButtonElement).style.color = '#ef4444';
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.4)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-muted)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-border)';
+                }}
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
           ))}
         </div>
       )}

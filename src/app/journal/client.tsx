@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -226,7 +226,7 @@ export default function JournalClient() {
                 <div style={{
                   width: '100%',
                   height: `${e.mood * 8}px`,
-                  background: `rgba(107,143,255,${0.3 + e.mood * 0.07})`,
+                  background: `rgba(200,145,90,${0.3 + e.mood * 0.07})`,
                   borderRadius: 4,
                   transition: 'height 0.3s',
                 }} />

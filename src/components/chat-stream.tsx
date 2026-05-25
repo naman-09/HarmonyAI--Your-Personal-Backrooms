@@ -6,6 +6,7 @@ import type { EmotionSignals } from '@/lib/emotion';
 // Expanded to include new alert (level 2) and crisis-with-level chunks
 export type StreamMessage =
   | { type: 'delta';  text: string }
+  | { type: 'replace'; text: string }
   | { type: 'alert';  level: 2 }
   | { type: 'crisis'; response: string; triggers: string[]; level: 3 | 4 }
   | { type: 'done' }

@@ -14,7 +14,10 @@
       "Bash(git commit -m ' *)",
       "Bash(node -e \"console.log\\(require\\('drizzle-orm/package.json'\\).version\\)\")",
       "Bash(npm list *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://localhost:3001\" -UseBasicParsing)",
+      "PowerShell(try { \\(Invoke-WebRequest -Uri \"http://localhost:11434/api/tags\" -UseBasicParsing -TimeoutSec 5\\).Content | ConvertFrom-Json | Select-Object -ExpandProperty models | Format-Table name, size -AutoSize } catch { Write-Output \"Ollama not reachable: $_\" })",
+      "PowerShell(Get-ChildItem \"c:\\\\Users\\\\papak\\\\Desktop\\\\harmony\\\\public\\\\models\" | Select-Object Name, @{n='SizeKB';e={[math]::Round\\($_.Length/1024,1\\)}})"
     ]
   }
 }

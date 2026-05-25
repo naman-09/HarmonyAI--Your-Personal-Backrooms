@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -65,8 +65,8 @@ export default function ResourcesClient() {
           style={{
             width: '100%',
             padding: '1rem 1.25rem',
-            background: 'rgba(107,143,255,0.08)',
-            border: '1px solid rgba(107,143,255,0.2)',
+            background: 'rgba(200,145,90,0.08)',
+            border: '1px solid rgba(200,145,90,0.2)',
             borderRadius: 'var(--radius-lg)',
             cursor: 'pointer',
             textAlign: 'left',
@@ -90,7 +90,7 @@ export default function ResourcesClient() {
               fontSize: 12,
               borderRadius: 999,
               border: `1px solid ${filter === cat ? 'var(--color-primary)' : 'var(--color-border)'}`,
-              background: filter === cat ? 'rgba(107,143,255,0.12)' : 'transparent',
+              background: filter === cat ? 'rgba(200,145,90,0.12)' : 'transparent',
               color: filter === cat ? 'var(--color-primary)' : 'var(--color-muted)',
               cursor: 'pointer',
               textTransform: 'capitalize',

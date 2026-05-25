@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -133,7 +133,7 @@ export function BreathingExercise({ onClose }: { onClose: () => void }) {
               fontSize: 12,
               borderRadius: 999,
               border: `1px solid ${i === patternIdx ? 'var(--color-primary)' : 'var(--color-border)'}`,
-              background: i === patternIdx ? 'rgba(107,143,255,0.12)' : 'transparent',
+              background: i === patternIdx ? 'rgba(200,145,90,0.12)' : 'transparent',
               color: i === patternIdx ? 'var(--color-primary)' : 'var(--color-muted)',
               cursor: 'pointer',
             }}
@@ -149,8 +149,8 @@ export function BreathingExercise({ onClose }: { onClose: () => void }) {
           width: 140,
           height: 140,
           borderRadius: '50%',
-          background: `radial-gradient(circle, rgba(107,143,255,${0.1 + progress * 0.15}) 0%, rgba(107,143,255,0.03) 70%)`,
-          border: '2px solid rgba(107,143,255,0.3)',
+          background: `radial-gradient(circle, rgba(200,145,90,${0.1 + progress * 0.15}) 0%, rgba(200,145,90,0.03) 70%)`,
+          border: '2px solid rgba(200,145,90,0.3)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

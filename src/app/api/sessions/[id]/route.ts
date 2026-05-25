@@ -52,3 +52,32 @@ export async function PATCH(
 
   return NextResponse.json({ ok: true });
 }
+
+// DELETE /api/sessions/[id] — permanently delete session + its messages
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const userId    = Number(req.headers.get('x-user-id'));
+  const sessionId = params.id;
+
+  const session = await db.query.sessions.findFirst({
+    where: eq(sessions.sessionId, sessionId),
+  });
+
+  if (!session || session.userId !== userId) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  // Delete messages first (FK constraint)
+  await db.delete(messages).where(eq(messages.sessionId, session.id));
+
+  // Delete the session
+  await db
+    .delete(sessions)
+    .where(and(eq(sessions.sessionId, sessionId), eq(sessions.userId, userId)));
+
+  await invalidateSession(sessionId);
+
+  return NextResponse.json({ ok: true });
+}

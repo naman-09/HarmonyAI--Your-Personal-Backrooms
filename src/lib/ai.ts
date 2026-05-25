@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { safetyCheck } from './safety';
 import { retrieveContext, formatRAGContext } from './rag';
 import type { EmotionSignals } from './emotion';
+import { describeEmotionSignals } from './emotion';
 
 // Point the OpenAI client at Ollama's OpenAI-compatible API
 const client = new OpenAI({
@@ -9,11 +10,60 @@ const client = new OpenAI({
   apiKey:  'ollama',
 });
 
-const MODEL       = process.env.OLLAMA_MODEL       || 'llama3.1:8b';
-const MAX_TOKENS  = Number(process.env.OLLAMA_MAX_TOKENS)  || 800;
+const MODEL       = process.env.OLLAMA_MODEL       || 'gemma4:31b-cloud';
+const MAX_TOKENS  = Number(process.env.OLLAMA_MAX_TOKENS)  || 1200;
 const TEMPERATURE = Number(process.env.OLLAMA_TEMPERATURE) || 0.7;
 const MAX_RETRIES = 2;
-const TIMEOUT_MS  = 30_000;
+const TIMEOUT_MS  = 120_000; // cloud-routed models have cold-start latency; local models are slower
+
+// Cloud-routed models (e.g. gemma4:31b-cloud) are served by Ollama's cloud backend.
+// They only need Ollama to be reachable — the cloud router handles inference.
+// Local models must be present in the pulled-models list.
+const IS_CLOUD_MODEL = MODEL.endsWith('-cloud') || MODEL.includes(':cloud');
+
+async function canUseConfiguredModel(): Promise<boolean> {
+  try {
+    const baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+    const res = await fetch(`${baseUrl}/api/tags`, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return false;
+
+    // Cloud model: Ollama being reachable is enough — cloud handles the rest
+    if (IS_CLOUD_MODEL) return true;
+
+    // Local model: verify it is actually pulled
+    const data = await res.json() as { models?: Array<{ name?: string }> };
+    return !!data.models?.some((m) => m.name === MODEL);
+  } catch {
+    return false;
+  }
+}
+
+function buildOfflineFallback(input: HarmonyInput): string {
+  const text = input.text.toLowerCase();
+  const isExamStress = /\b(exam|test|study|studies|assignment)\b/.test(text);
+  const isAnxious = /\b(anxious|anxiety|panic|scared|worried|stress|stressed|overwhelmed)\b/.test(text);
+  const isAngry = /\b(angry|furious|rage|hate|frustrated)\b/.test(text);
+
+  if (isExamStress || isAnxious) {
+    return "That sounds really heavy, and it makes sense that your mind is running fast right now. Try one small reset: breathe in for 4, hold for 4, breathe out for 4, then pick just the next tiny study step. What part feels most urgent at this moment?";
+  }
+
+  if (isAngry) {
+    return "I hear how intense that feels. Before you do anything with that energy, try unclenching your jaw, dropping your shoulders, and taking three slower breaths so your body gets a little room. What happened right before the anger spiked?";
+  }
+
+  return "I am here with you. The local AI model is not available right now, but you do not have to hold this alone in the meantime. What feels hardest about this right now?";
+}
+
+function shouldUseFallback(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return normalized.includes('requires more system memory') ||
+    normalized.includes('model') ||
+    normalized.includes('econnrefused') ||
+    normalized.includes('fetch failed') ||
+    normalized.includes('aborted') ||
+    normalized.includes('timeout');
+}
 
 // ─── System prompt ────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are Harmony, a warm and emotionally intelligent wellness companion. You think quickly, respond naturally, and genuinely care about the person you're talking to.
@@ -144,6 +194,31 @@ export type StreamChunk =
   | { type: 'done';    usage: UsageSummary; safetyLevel: number }
   | { type: 'error';   message: string };
 
+// ─── JSON extraction helper ───────────────────────────────────
+// The model sometimes wraps JSON in markdown code fences or adds preamble text.
+// Try several strategies before giving up.
+function tryParseHarmonyResponse(
+  raw: string,
+): { response_text?: string; validation?: string; question?: string } | null {
+  // 1. Direct parse
+  try { return JSON.parse(raw); } catch { /* try next */ }
+
+  // 2. Strip markdown code fences (```json ... ``` or ``` ... ```)
+  const stripped = raw.replace(/^```(?:json)?\s*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
+  if (stripped !== raw) {
+    try { return JSON.parse(stripped); } catch { /* try next */ }
+  }
+
+  // 3. Find the outermost { ... } in the response
+  const start = raw.indexOf('{');
+  const end   = raw.lastIndexOf('}');
+  if (start !== -1 && end > start) {
+    try { return JSON.parse(raw.slice(start, end + 1)); } catch { /* try next */ }
+  }
+
+  return null;
+}
+
 // ─── Main streaming function ──────────────────────────────────
 export async function* streamHarmonyResponse(
   input: HarmonyInput
@@ -185,12 +260,7 @@ export async function* streamHarmonyResponse(
 
   const noteLines: string[] = [
     `Message: "${input.text}"`,
-    `Emotion signals:`,
-    `  voice_pitch=${input.emotionSignals.voicePitch}Hz`,
-    `  voice_volume=${input.emotionSignals.voiceVolume.toFixed(1)}`,
-    `  face_anger=${input.emotionSignals.faceAnger.toFixed(3)}`,
-    `  text_sentiment=${input.emotionSignals.textSentiment.toFixed(3)}`,
-    `  face_available=${input.emotionSignals.faceAvailable}`,
+    `Multimodal emotion signals: ${describeEmotionSignals(input.emotionSignals)}`,
   ];
 
   if (risk.level === 1) noteLines.push(`\nNote: elevated concern detected — respond at safety_level 1 with extra warmth and subtly mention iCall (9152987821)`);
@@ -200,7 +270,19 @@ export async function* streamHarmonyResponse(
 
   const userContent = noteLines.filter(Boolean).join('\n');
 
-  // 6. Stream from Ollama (with retry + timeout)
+  if (!(await canUseConfiguredModel())) {
+    yield { type: 'replace', text: buildOfflineFallback(input) };
+    yield {
+      type:        'done',
+      usage:       { input_tokens: 0, output_tokens: 0 },
+      safetyLevel: risk.level,
+    };
+    return;
+  }
+
+  // 6. Call Ollama — non-streaming so only the parsed response_text is ever sent to the client.
+  //    Streaming raw JSON fragments causes "gibberish" in the chat bubble; this approach
+  //    waits for the full completion, parses the JSON, and emits a single clean replace chunk.
   const apiMessages = [
     { role: 'system' as const, content: SYSTEM_PROMPT },
     ...contextWindow,
@@ -210,58 +292,46 @@ export async function* streamHarmonyResponse(
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+      const timeoutId  = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-      const stream = await client.chat.completions.create({
+      const completion = await client.chat.completions.create({
         model:       MODEL,
         max_tokens:  MAX_TOKENS,
         temperature: TEMPERATURE,
-        stream:      true,
+        stream:      false,
         messages:    apiMessages,
       }, { signal: controller.signal as any });
 
-      let inputTokens  = 0;
-      let outputTokens = 0;
-      let fullResponse = '';
+      clearTimeout(timeoutId);
 
-      for await (const chunk of stream) {
-        const delta = chunk.choices[0]?.delta?.content;
-        if (delta) {
-          fullResponse += delta;
-          yield { type: 'delta', text: delta };
-        }
+      const fullResponse = completion.choices[0]?.message?.content ?? '';
+      const inputTokens  = completion.usage?.prompt_tokens     ?? 0;
+      const outputTokens = completion.usage?.completion_tokens ?? 0;
 
-        if (chunk.usage) {
-          inputTokens  = chunk.usage.prompt_tokens     ?? 0;
-          outputTokens = chunk.usage.completion_tokens ?? 0;
+      // Extract the clean conversational reply from the model's JSON envelope
+      const harmonyJson = tryParseHarmonyResponse(fullResponse);
+      let displayText   = '';
+
+      if (harmonyJson) {
+        displayText = typeof harmonyJson.response_text === 'string'
+          ? harmonyJson.response_text.trim()
+          : '';
+
+        // Fallback: stitch validation + question if response_text is missing
+        if (!displayText) {
+          if (typeof harmonyJson.validation === 'string' && harmonyJson.validation.trim()) {
+            displayText = harmonyJson.validation.trim();
+          }
+          if (typeof harmonyJson.question === 'string' && harmonyJson.question.trim()) {
+            displayText += (displayText ? '\n\n' : '') + harmonyJson.question.trim();
+          }
         }
       }
 
-      clearTimeout(timeout);
+      // Last resort: model returned plain text instead of JSON — use it directly
+      if (!displayText) displayText = fullResponse.trim();
 
-      // Parse JSON response and extract display text
-      try {
-        const parsed = JSON.parse(fullResponse);
-        if (parsed && typeof parsed === 'object') {
-          let displayText = typeof parsed.response_text === 'string' ? parsed.response_text.trim() : '';
-
-          if (!displayText) {
-            if (typeof parsed.validation === 'string' && parsed.validation.trim()) {
-              displayText = parsed.validation.trim();
-            }
-            if (typeof parsed.question === 'string' && parsed.question.trim()) {
-              displayText += (displayText ? '\n\n' : '') + parsed.question.trim();
-            }
-          }
-
-          if (displayText) {
-            yield { type: 'replace', text: displayText };
-          }
-        }
-      } catch {
-        // Not valid JSON — leave the raw text as-is (already streamed)
-      }
-
+      yield { type: 'replace', text: displayText };
       yield {
         type:        'done',
         usage:       { input_tokens: inputTokens, output_tokens: outputTokens },
@@ -271,17 +341,28 @@ export async function* streamHarmonyResponse(
 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      const isRetryable = message.includes('ECONNREFUSED') ||
-                          message.includes('fetch failed') ||
-                          message.includes('aborted') ||
-                          message.includes('timeout');
+      const isRetryable =
+        message.includes('ECONNREFUSED') ||
+        message.includes('fetch failed')  ||
+        message.includes('aborted')       ||
+        message.includes('timeout');
 
       if (isRetryable && attempt < MAX_RETRIES) {
-        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+        await new Promise((r) => setTimeout(r, 1_500 * (attempt + 1)));
         continue;
       }
 
-      yield { type: 'error', message };
+      if (shouldUseFallback(message)) {
+        yield { type: 'replace', text: buildOfflineFallback(input) };
+        yield {
+          type:        'done',
+          usage:       { input_tokens: 0, output_tokens: 0 },
+          safetyLevel: risk.level,
+        };
+        return;
+      }
+
+      yield { type: 'error', message: 'Harmony could not respond right now. Please try again in a moment.' };
       return;
     }
   }

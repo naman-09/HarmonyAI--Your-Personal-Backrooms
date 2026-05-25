@@ -4,6 +4,11 @@ const nextConfig = {
     serverComponentsExternalPackages: ['face-api.js'],
   },
   webpack: (config) => {
+    config.resolve = config.resolve || {};
+    config.resolve.fallback = {
+      ...(config.resolve.fallback || {}),
+      fs: false,
+    };
     config.externals = [...(config.externals || []), { canvas: 'canvas' }];
     return config;
   },

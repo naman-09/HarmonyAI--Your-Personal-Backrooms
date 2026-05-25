@@ -9,16 +9,29 @@ import { z } from 'zod';
 
 export const runtime = 'nodejs';
 
+// Face signal validator — all fields optional so old clients still work
+const FaceSignals = z.object({
+  faceAnger:     z.number().min(0).max(1).default(0),
+  faceSad:       z.number().min(0).max(1).default(0),
+  faceHappy:     z.number().min(0).max(1).default(0),
+  faceSurprised: z.number().min(0).max(1).default(0),
+  faceDisgusted: z.number().min(0).max(1).default(0),
+  faceFearful:   z.number().min(0).max(1).default(0),
+  faceNeutral:   z.number().min(0).max(1).default(1),
+  eyeOpenness:   z.number().min(0).max(1).default(0),
+  browRaise:     z.number().min(0).max(1).default(0),
+  mouthOpen:     z.number().min(0).max(1).default(0),
+  faceAvailable: z.boolean().default(false),
+});
+
 const ChatSchema = z.object({
   sessionId:      z.string().uuid(),
   text:           z.string().min(1).max(2000),
   emotionSignals: z.object({
     voicePitch:    z.number().min(0),
     voiceVolume:   z.number().min(0).max(100),
-    faceAnger:     z.number().min(0).max(1),
     textSentiment: z.number().min(0).max(1),
-    faceAvailable: z.boolean(),
-  }),
+  }).merge(FaceSignals),
   history: z.array(z.object({
     role:    z.enum(['user', 'assistant']),
     content: z.string(),
@@ -89,6 +102,10 @@ export async function POST(req: NextRequest) {
 
           if (chunk.type === 'delta') {
             assistantContent += chunk.text;
+          }
+
+          if (chunk.type === 'replace') {
+            assistantContent = chunk.text;
           }
 
           // ── Level 2: distress — AI still responds, we fire SMS in background

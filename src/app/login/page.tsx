@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -55,8 +55,8 @@ export default function LoginPage() {
           <div style={{
             width: 52, height: 52,
             borderRadius: '50%',
-            background: 'rgba(107,143,255,0.15)',
-            border: '1px solid rgba(107,143,255,0.3)',
+            background: 'rgba(200,145,90,0.15)',
+            border: '1px solid rgba(200,145,90,0.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 1rem',
             fontSize: 24,
@@ -125,7 +125,7 @@ export default function LoginPage() {
             style={{
               marginTop: 4,
               padding: '11px',
-              background: loading ? 'rgba(107,143,255,0.4)' : 'var(--color-primary)',
+              background: loading ? 'rgba(200,145,90,0.4)' : 'var(--color-primary)',
               color: '#fff',
               border: 'none',
               borderRadius: 'var(--radius-md)',

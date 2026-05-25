@@ -8,7 +8,7 @@ import {
   Pencil, Check, X, Home, TrendingUp, BookOpen, Sparkles, Settings as SettingsIcon,
   Shield, LogOut, Sun, Moon,
 } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/components/theme-provider';
 
 interface Session {
   sessionId: string;
@@ -37,7 +37,7 @@ const COLLAPSE_KEY = 'harmony-sidebar-collapsed';
 export function Sidebar({ isAdmin }: SidebarProps) {
   const router   = useRouter();
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+  const { theme, toggle: toggleTheme } = useTheme();
 
   const [collapsed,   setCollapsed]   = useState(false);
   const [sessions,    setSessions]    = useState<Session[]>([]);
@@ -323,7 +323,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
       {/* ── Bottom: theme + logout ── */}
       <div className="sidebar-bottom">
         <button
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          onClick={toggleTheme}
           className="bottom-btn"
           title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         >

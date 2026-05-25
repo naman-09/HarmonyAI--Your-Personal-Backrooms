@@ -27,6 +27,7 @@ const FaceSignals = z.object({
 const UserContextSchema = z.object({
   timeOfDay:          z.string().optional(),
   localTime:          z.string().optional(),
+  season:             z.string().optional(),
   location:           z.string().optional(),
   weatherCondition:   z.string().optional(),
   weatherDescription: z.string().optional(),

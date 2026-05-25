@@ -188,6 +188,8 @@ export interface UserContext {
   timeOfDay?:   string;
   /** Local time as user sees it, e.g. "Tuesday, 7:14pm". */
   localTime?:   string;
+  /** Current month-based season (Winter / Spring / Summer / Monsoon / Autumn). */
+  season?:      string;
   /** City + region from reverse geocoding. */
   location?:    string;
   /** Weather condition (clear / cloudy / rain / snow / storm / fog). */
@@ -286,6 +288,7 @@ export async function* streamHarmonyResponse(
     const c = input.userContext;
     const ctx: string[] = [];
     if (c.localTime)    ctx.push(`Local time: ${c.localTime}${c.timeOfDay ? ` (${c.timeOfDay})` : ''}`);
+    if (c.season)       ctx.push(`Season: ${c.season}`);
     if (c.location)     ctx.push(`Location: ${c.location}`);
     if (c.weatherDescription || c.weatherCondition) {
       const w = c.weatherDescription ?? c.weatherCondition;

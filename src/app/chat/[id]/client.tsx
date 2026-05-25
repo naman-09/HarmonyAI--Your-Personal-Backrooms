@@ -12,6 +12,8 @@ import { SOSButton } from '@/components/sos-button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { TimeOfDayIcon } from '@/components/time-of-day-icon';
 import { useUserContext, describeTimeOfDay } from '@/hooks/use-user-context';
+import { useThemeEngine } from '@/lib/theme/store';
+import { describeSeason } from '@/lib/theme/engine';
 import { scoreEmotion, type EmotionScore, type EmotionSignals } from '@/lib/emotion';
 import EMOTION_LEXICON from '@/lib/emotion-lexicon.json';
 import { ArrowLeft } from 'lucide-react';
@@ -306,6 +308,7 @@ export default function ChatClient({
 
   // Real-time user context — drives the icon + Harmony's awareness
   const userCtx = useUserContext();
+  const themeEngine = useThemeEngine();
 
   // Time-based greeting — set once on mount so it doesn't drift mid-session
   const [greeting] = useState(() => greetingFor(new Date().getHours()));
@@ -521,6 +524,7 @@ export default function ChatClient({
       localTime:          now.toLocaleString('en-IN', {
         weekday: 'long', hour: 'numeric', minute: '2-digit', hour12: true,
       }),
+      season:             describeSeason(themeEngine.season),
       location:           userCtx.weather?.locationName,
       weatherCondition:   userCtx.weather?.condition,
       weatherDescription: userCtx.weather?.description,
@@ -529,7 +533,7 @@ export default function ChatClient({
 
     await send(text, currentSignals, historyRef.current.slice(-6), userContextPayload);
     inputRef.current?.focus();
-  }, [streaming, handleSignals, send, userCtx]);
+  }, [streaming, handleSignals, send, userCtx, themeEngine.season]);
 
   // Keep doSend in a ref so handleTranscript effect can call it without stale closure
   const doSendRef = useRef(doSend);

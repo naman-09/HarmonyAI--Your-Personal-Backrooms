@@ -5,7 +5,11 @@ import { toast } from 'sonner';
 import { Sidebar } from '@/components/sidebar';
 import { TimeOfDayIcon, getIconStyle, setIconStyle, type IconStyle } from '@/components/time-of-day-icon';
 import { getTimeOfDay } from '@/hooks/use-user-context';
-import { Camera, Mic, MapPin, Calendar, Bell, Check, X as XIcon } from 'lucide-react';
+import { useThemeEngine } from '@/lib/theme/store';
+import { PRESETS } from '@/lib/theme/presets';
+import { describeSeason } from '@/lib/theme/engine';
+import type { MotionMode } from '@/lib/theme/types';
+import { Camera, Mic, MapPin, Calendar, Bell, Check, X as XIcon, Zap, ZapOff, Activity, MonitorSmartphone } from 'lucide-react';
 
 interface SettingsData {
   trustedContactName:  string;
@@ -34,6 +38,9 @@ export default function SettingsClient({ initial }: { initial: SettingsData }) {
   // Icon-style toggle + permissions display
   const [iconStyle, setIconStyleState] = useState<IconStyle>('animated');
   const [perms,     setPerms]     = useState<Permissions>(DEFAULT_PERMS);
+
+  // Theme engine controls
+  const theme = useThemeEngine();
 
   useEffect(() => {
     setIconStyleState(getIconStyle());
@@ -179,6 +186,80 @@ export default function SettingsClient({ initial }: { initial: SettingsData }) {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* ── Motion mode ── */}
+      <div style={card}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: '0.75rem' }}>Motion & ambience</h2>
+        <p style={{ fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+          Controls the animated background, particle effects, and theme transitions.
+          {' '}Auto follows your system&apos;s reduced-motion preference.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+          {([
+            { id: 'auto',     label: 'Auto',     icon: <MonitorSmartphone size={16} />, desc: 'Follow system' },
+            { id: 'dynamic',  label: 'Dynamic',  icon: <Zap size={16} />,               desc: 'Full motion'  },
+            { id: 'static',   label: 'Static',   icon: <ZapOff size={16} />,            desc: 'No animation'  },
+            { id: 'reduced',  label: 'Reduced',  icon: <Activity size={16} />,          desc: 'Minimal'       },
+          ] as Array<{ id: MotionMode; label: string; icon: React.ReactNode; desc: string }>).map((m) => {
+            const active = theme.motionMode === m.id;
+            return (
+              <button
+                key={m.id}
+                onClick={() => theme.setMotionMode(m.id)}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                  padding: '12px 6px',
+                  background: active ? 'color-mix(in srgb, var(--color-primary) 10%, var(--color-surface-2))' : 'var(--color-surface-2)',
+                  border: active ? '1.5px solid var(--color-primary)' : '1.5px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  color: active ? 'var(--color-primary)' : 'var(--color-muted)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {m.icon}
+                <span style={{ fontSize: 12, fontWeight: 600 }}>{m.label}</span>
+                <span style={{ fontSize: 10, opacity: 0.75 }}>{m.desc}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p style={{ fontSize: 11.5, color: 'var(--color-subtle)', marginTop: 12, lineHeight: 1.5 }}>
+          Currently active: <strong style={{ color: 'var(--color-text)' }}>{theme.effectiveMotion}</strong>
+          {' · '}
+          Theme preset: <strong style={{ color: 'var(--color-text)' }}>{theme.preset.name}</strong>
+          {' · '}
+          Season: <strong style={{ color: 'var(--color-text)' }}>{describeSeason(theme.season)}</strong>
+        </p>
+      </div>
+
+      {/* ── Manual theme override ── */}
+      <div style={card}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: '0.75rem' }}>Theme override</h2>
+        <p style={{ fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+          By default, the theme matches your local time + weather + season.
+          {' '}You can lock it to a specific preset if you prefer one consistently.
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          <button
+            onClick={() => theme.setOverride(null)}
+            style={pillStyle(theme.override === null)}
+          >
+            ✨ Auto
+          </button>
+          {PRESETS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => theme.setOverride(p.id)}
+              title={p.description}
+              style={pillStyle(theme.override === p.id)}
+            >
+              {p.name}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -430,4 +511,22 @@ export default function SettingsClient({ initial }: { initial: SettingsData }) {
       </main>
     </div>
   );
+}
+
+// Pill button style — used by the theme override row
+function pillStyle(active: boolean): React.CSSProperties {
+  return {
+    padding: '6px 12px',
+    fontSize: 12.5,
+    borderRadius: 999,
+    border: active ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
+    background: active
+      ? 'color-mix(in srgb, var(--color-primary) 14%, transparent)'
+      : 'var(--color-surface-2)',
+    color: active ? 'var(--color-primary)' : 'var(--color-muted)',
+    fontFamily: 'inherit',
+    fontWeight: active ? 600 : 500,
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+  };
 }

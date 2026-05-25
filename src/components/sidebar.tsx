@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import {
   PanelLeftClose, PanelLeftOpen, Plus, MoreHorizontal, Pin, PinOff, Trash2,
   Pencil, Check, X, Home, TrendingUp, BookOpen, Sparkles, Settings as SettingsIcon,
-  Shield, LogOut, Sun, Moon,
+  Shield, LogOut, Sun, Moon, RotateCw, MapPinOff,
 } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
 import { TimeOfDayIcon } from '@/components/time-of-day-icon';
@@ -324,24 +324,14 @@ export function Sidebar({ isAdmin }: SidebarProps) {
       )}
 
       {/* ── "Right now" panel — local time + weather + city ── */}
-      {!collapsed && (userCtx.weather || userCtx.loading) && (
-        <div className="now-panel">
-          <div className="now-icon">
-            <TimeOfDayIcon tod={userCtx.timeOfDay} size={34} />
-          </div>
-          <div className="now-text">
-            <p className="now-time">
-              {describeTimeOfDay(userCtx.timeOfDay)}
-              <span className="now-dot">·</span>
-              <span className="now-temp">
-                {userCtx.weather ? `${userCtx.weather.temperatureC}°` : '—'}
-              </span>
-            </p>
-            <p className="now-place" title={userCtx.weather?.description}>
-              {userCtx.weather?.locationName ?? (userCtx.loading ? 'Locating…' : 'No location')}
-            </p>
-          </div>
-        </div>
+      {!collapsed && (
+        <NowPanel
+          loading={userCtx.loading}
+          weather={userCtx.weather}
+          tod={userCtx.timeOfDay}
+          error={userCtx.error}
+          onRefresh={() => userCtx.refresh()}
+        />
       )}
       {collapsed && userCtx.weather && (
         <div className="now-panel-mini" title={`${userCtx.weather.description} · ${userCtx.weather.temperatureC}°`}>
@@ -539,6 +529,38 @@ export function Sidebar({ isAdmin }: SidebarProps) {
           display: flex; align-items: center; justify-content: center;
           padding: 8px 0;
           margin: 0 8px;
+        }
+        .now-refresh {
+          width: 22px; height: 22px;
+          display: flex; align-items: center; justify-content: center;
+          background: none;
+          border: 1px solid transparent;
+          border-radius: 50%;
+          color: var(--color-muted);
+          cursor: pointer;
+          opacity: 0;
+          transition: all 0.15s;
+          flex-shrink: 0;
+        }
+        .now-panel:hover .now-refresh { opacity: 0.7; }
+        .now-refresh:hover { opacity: 1; color: var(--color-primary); border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border)); }
+        .now-refresh:disabled { opacity: 0.5; cursor: progress; }
+        .spinning { animation: nowSpin 0.9s linear infinite; }
+        @keyframes nowSpin { to { transform: rotate(360deg); } }
+
+        /* Prompt variant — when user hasn't enabled location */
+        .now-panel-prompt {
+          width: calc(100% - 16px);
+          border: 1px dashed var(--color-border-2);
+          color: var(--color-muted);
+          cursor: pointer;
+          font-family: inherit;
+          text-align: left;
+        }
+        .now-panel-prompt:hover {
+          border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border-2));
+          color: var(--color-text);
+          background: color-mix(in srgb, var(--color-primary) 5%, transparent);
         }
 
         .sidebar-bottom {
@@ -801,4 +823,82 @@ function sortSessions(list: Session[]): Session[] {
     if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     return b.createdAt.localeCompare(a.createdAt);
   });
+}
+
+// ─── "Right now" panel ───────────────────────────────────────
+// Distinct states:
+//   1. Permission not yet asked        → no panel (avoids clutter)
+//   2. Loading the location/weather    → "Locating…" + spinner
+//   3. Weather + city resolved (happy) → full readout
+//   4. Weather resolved, city missing  → "Location pending" + refresh
+//   5. Error / permission denied       → friendly message + refresh
+function NowPanel({
+  loading, weather, tod, error, onRefresh,
+}: {
+  loading: boolean;
+  weather: ReturnType<typeof useUserContext>['weather'];
+  tod:     ReturnType<typeof useUserContext>['timeOfDay'];
+  error:   string | null;
+  onRefresh: () => void | Promise<void>;
+}) {
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function handleRefresh() {
+    if (refreshing) return;
+    setRefreshing(true);
+    try { await onRefresh(); } finally { setRefreshing(false); }
+  }
+
+  // No weather, not loading, no error → user hasn't granted location yet.
+  // Show a compact prompt rather than hiding entirely.
+  if (!weather && !loading && !error) {
+    return (
+      <button onClick={handleRefresh} className="now-panel now-panel-prompt">
+        <div className="now-icon">
+          <TimeOfDayIcon tod={tod} size={28} />
+        </div>
+        <div className="now-text">
+          <p className="now-time">{describeTimeOfDay(tod)}</p>
+          <p className="now-place">Tap to enable location</p>
+        </div>
+      </button>
+    );
+  }
+
+  const hasCity = !!weather?.locationName;
+
+  return (
+    <div className="now-panel">
+      <div className="now-icon">
+        <TimeOfDayIcon tod={tod} size={34} />
+      </div>
+      <div className="now-text">
+        <p className="now-time">
+          {describeTimeOfDay(tod)}
+          <span className="now-dot">·</span>
+          <span className="now-temp">
+            {weather ? `${weather.temperatureC}°` : '—'}
+          </span>
+        </p>
+        <p className="now-place" title={weather?.description}>
+          {loading && !weather
+            ? 'Locating…'
+            : hasCity
+              ? weather!.locationName
+              : error
+                ? <><MapPinOff size={10} style={{ display: 'inline', marginRight: 3 }} /> Location unavailable</>
+                : 'Location pending'}
+        </p>
+      </div>
+      <button
+        onClick={handleRefresh}
+        className="now-refresh"
+        title={refreshing ? 'Refreshing…' : 'Refresh weather + location'}
+        aria-label="Refresh"
+        disabled={refreshing}
+      >
+        <RotateCw size={11} className={refreshing ? 'spinning' : ''} />
+      </button>
+    </div>
+  );
 }

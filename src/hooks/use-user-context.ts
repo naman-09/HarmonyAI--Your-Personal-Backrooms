@@ -143,6 +143,16 @@ export function useUserContext(): UserContext {
       const lng = coords.longitude;
       setLocation({ lat, lng });
 
+      // Remember that location was granted, so future page loads
+      // auto-fetch without the user clicking the prompt again.
+      try {
+        const raw = localStorage.getItem(PERM_KEY);
+        const perms = raw ? JSON.parse(raw) : {};
+        if (!perms.location) {
+          localStorage.setItem(PERM_KEY, JSON.stringify({ ...perms, location: true }));
+        }
+      } catch { /* localStorage unavailable */ }
+
       const res = await fetch(`/api/weather?lat=${lat}&lng=${lng}`);
       if (!res.ok) throw new Error(`Weather fetch failed (${res.status})`);
       const data = await res.json() as WeatherSnapshot;

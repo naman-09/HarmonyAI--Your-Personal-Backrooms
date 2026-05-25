@@ -10,6 +10,8 @@ import { useChatStream } from '@/components/chat-stream';
 import CrisisScreen from '@/components/crisis-screen';
 import { SOSButton } from '@/components/sos-button';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { TimeOfDayIcon } from '@/components/time-of-day-icon';
+import { useUserContext, describeTimeOfDay } from '@/hooks/use-user-context';
 import { scoreEmotion, type EmotionScore, type EmotionSignals } from '@/lib/emotion';
 import EMOTION_LEXICON from '@/lib/emotion-lexicon.json';
 
@@ -301,6 +303,9 @@ export default function ChatClient({
 }) {
   const router = useRouter();
 
+  // Real-time user context — drives the icon + Harmony's awareness
+  const userCtx = useUserContext();
+
   // Time-based greeting — set once on mount so it doesn't drift mid-session
   const [greeting] = useState(() => greetingFor(new Date().getHours()));
   const firstName  = userName?.trim().split(/\s+/)[0];
@@ -508,9 +513,22 @@ export default function ChatClient({
     setMessages((prev) => [...prev, { role: 'user', content: text, ts: Date.now() }]);
     historyRef.current = [...historyRef.current, { role: 'user', content: text }];
 
-    await send(text, currentSignals, historyRef.current.slice(-6));
+    // ── Build real-time context to send alongside the message ──
+    const now = new Date();
+    const userContextPayload = {
+      timeOfDay:          describeTimeOfDay(userCtx.timeOfDay),
+      localTime:          now.toLocaleString('en-IN', {
+        weekday: 'long', hour: 'numeric', minute: '2-digit', hour12: true,
+      }),
+      location:           userCtx.weather?.locationName,
+      weatherCondition:   userCtx.weather?.condition,
+      weatherDescription: userCtx.weather?.description,
+      temperatureC:       userCtx.weather?.temperatureC,
+    };
+
+    await send(text, currentSignals, historyRef.current.slice(-6), userContextPayload);
     inputRef.current?.focus();
-  }, [streaming, handleSignals, send]);
+  }, [streaming, handleSignals, send, userCtx]);
 
   // Keep doSend in a ref so handleTranscript effect can call it without stale closure
   const doSendRef = useRef(doSend);
@@ -618,20 +636,7 @@ export default function ChatClient({
             ) : messages.length === 0 ? (
               <div className="welcome-state">
                 <div className="welcome-burst" aria-hidden>
-                  {/* Harmony sun-burst — echoes the orange starburst from the brand */}
-                  <svg viewBox="0 0 64 64" width="56" height="56">
-                    <g fill="rgba(200,145,90,0.95)">
-                      {Array.from({ length: 12 }).map((_, i) => (
-                        <rect
-                          key={i}
-                          x="30.5" y="4" width="3" height="18" rx="1.5"
-                          transform={`rotate(${i * 30} 32 32)`}
-                          opacity={0.55 + (i % 3) * 0.15}
-                        />
-                      ))}
-                    </g>
-                    <circle cx="32" cy="32" r="6" fill="rgba(200,145,90,1)" />
-                  </svg>
+                  <TimeOfDayIcon tod={userCtx.timeOfDay} size={64} />
                 </div>
                 <h1 className="welcome-greeting">
                   {greeting}{firstName ? <>, <span className="welcome-name">{firstName}</span></> : ''}

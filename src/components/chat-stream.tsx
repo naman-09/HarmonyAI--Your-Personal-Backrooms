@@ -25,7 +25,8 @@ export function useChatStream({ sessionId, onChunk }: UseChatStreamOptions) {
     async (
       text:           string,
       emotionSignals: EmotionSignals,
-      history:        Array<{ role: 'user' | 'assistant'; content: string }>
+      history:        Array<{ role: 'user' | 'assistant'; content: string }>,
+      userContext?:   Record<string, unknown>,
     ) => {
       if (streaming) return;
 
@@ -37,7 +38,7 @@ export function useChatStream({ sessionId, onChunk }: UseChatStreamOptions) {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
           signal:  abortRef.current.signal,
-          body:    JSON.stringify({ sessionId, text, emotionSignals, history }),
+          body:    JSON.stringify({ sessionId, text, emotionSignals, history, userContext }),
         });
 
         if (!res.ok) {

@@ -3,11 +3,14 @@
 import { Toaster } from 'sonner';
 import { ErrorBoundary } from './error-boundary';
 import { ThemeProvider } from './theme-provider';
+import { WeatherThemeBridge } from './weather-theme-bridge';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
       <ThemeProvider>
+        {/* Globally applies the weather-conditional tint based on user location. */}
+        <WeatherThemeBridge />
         {children}
         <Toaster
           position="top-center"

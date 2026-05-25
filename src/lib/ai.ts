@@ -179,6 +179,21 @@ export interface HarmonyInput {
   history:        Array<{ role: 'user' | 'assistant'; content: string }>;
   sessionId?:     string;
   userId?:        number;
+  /** Optional real-time user context — time of day, local weather, city. */
+  userContext?:   UserContext;
+}
+
+export interface UserContext {
+  /** Local time-of-day phase (early-morning / morning / daylight / etc). */
+  timeOfDay?:   string;
+  /** Local time as user sees it, e.g. "Tuesday, 7:14pm". */
+  localTime?:   string;
+  /** City + region from reverse geocoding. */
+  location?:    string;
+  /** Weather condition (clear / cloudy / rain / snow / storm / fog). */
+  weatherCondition?: string;
+  weatherDescription?: string;
+  temperatureC?: number;
 }
 
 export interface UsageSummary {
@@ -262,6 +277,24 @@ export async function* streamHarmonyResponse(
     `Message: "${input.text}"`,
     `Multimodal emotion signals: ${describeEmotionSignals(input.emotionSignals)}`,
   ];
+
+  // ── Real-time user context (weather / location / time) ─────
+  // Harmony can reference these naturally — "rough storm out there today",
+  // "kind of late for this, huh", "given how warm it is in Mumbai right now".
+  // Only include lines we actually have. Stays light — one line each.
+  if (input.userContext) {
+    const c = input.userContext;
+    const ctx: string[] = [];
+    if (c.localTime)    ctx.push(`Local time: ${c.localTime}${c.timeOfDay ? ` (${c.timeOfDay})` : ''}`);
+    if (c.location)     ctx.push(`Location: ${c.location}`);
+    if (c.weatherDescription || c.weatherCondition) {
+      const w = c.weatherDescription ?? c.weatherCondition;
+      ctx.push(`Weather: ${w}${typeof c.temperatureC === 'number' ? ` at ${c.temperatureC}°C` : ''}`);
+    }
+    if (ctx.length > 0) {
+      noteLines.push(`\nContext (use lightly, don't recite — only reference if naturally relevant):\n${ctx.join('\n')}`);
+    }
+  }
 
   if (risk.level === 1) noteLines.push(`\nNote: elevated concern detected — respond at safety_level 1 with extra warmth and subtly mention iCall (9152987821)`);
   if (risk.level === 2) noteLines.push(`\nNote: distress detected — respond with maximum compassion, the person is struggling significantly`);

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Settings, Flame, TrendingUp, TrendingDown, Minus, ArrowRight, Plus } from 'lucide-react';
 import { Onboarding } from '@/components/onboarding';
 import { Sidebar } from '@/components/sidebar';
+import { TimeOfDayIcon } from '@/components/time-of-day-icon';
+import { useUserContext } from '@/hooks/use-user-context';
 
 interface Stats {
   totalSessions:    number;
@@ -40,6 +42,7 @@ function todayStr(): string {
 
 export default function DashboardClient({ userId, isAdmin }: { userId: number; isAdmin?: boolean }) {
   const router = useRouter();
+  const userCtx = useUserContext();
   const [stats,       setStats]       = useState<Stats | null>(null);
   const [todayMood,   setTodayMood]   = useState<TodayJournal | null>(null);
   const [loading,     setLoading]     = useState(true);
@@ -47,7 +50,9 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
   const [showOnboard, setShowOnboard] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem('harmony-onboarded')) setShowOnboard(true);
+    // v2 key — bumped when the permissions step was added so existing
+    // users get re-prompted to grant location/camera/mic/etc.
+    if (!localStorage.getItem('harmony-onboarded-v2')) setShowOnboard(true);
   }, []);
 
   // Load Today snapshot data — stats + today's journal entry in parallel
@@ -126,20 +131,16 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
           {/* ── Hero greeting ── */}
           <header className="dash-hero">
             <div className="dash-burst" aria-hidden>
-              <svg viewBox="0 0 64 64" width="48" height="48">
-                <g fill="rgba(200,145,90,0.95)">
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <rect key={i} x="30.5" y="4" width="3" height="18" rx="1.5"
-                      transform={`rotate(${i * 30} 32 32)`}
-                      opacity={0.55 + (i % 3) * 0.15}
-                    />
-                  ))}
-                </g>
-                <circle cx="32" cy="32" r="6" fill="rgba(200,145,90,1)" />
-              </svg>
+              <TimeOfDayIcon tod={userCtx.timeOfDay} size={56} />
             </div>
             <h1 className="dash-title">{greeting}</h1>
-            <p className="dash-sub">Here&apos;s your day at a glance.</p>
+            <p className="dash-sub">
+              {userCtx.weather?.locationName && userCtx.weather?.description ? (
+                <>It&apos;s {userCtx.weather.description.toLowerCase()} in {userCtx.weather.locationName} · {userCtx.weather.temperatureC}°</>
+              ) : (
+                <>Here&apos;s your day at a glance.</>
+              )}
+            </p>
           </header>
 
           {/* ── Today snapshot ── */}
@@ -286,7 +287,6 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
         .dash-burst {
           display: flex; justify-content: center;
           margin-bottom: 0.75rem;
-          animation: dashBurst 24s linear infinite;
         }
         .dash-title {
           font-family: Georgia, 'Fraunces', serif;

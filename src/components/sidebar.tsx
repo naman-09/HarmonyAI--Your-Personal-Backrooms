@@ -9,6 +9,8 @@ import {
   Shield, LogOut, Sun, Moon,
 } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
+import { TimeOfDayIcon } from '@/components/time-of-day-icon';
+import { useUserContext, describeTimeOfDay } from '@/hooks/use-user-context';
 
 interface Session {
   sessionId: string;
@@ -38,6 +40,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
   const router   = useRouter();
   const pathname = usePathname();
   const { theme, toggle: toggleTheme } = useTheme();
+  const userCtx = useUserContext();
 
   const [collapsed,   setCollapsed]   = useState(false);
   const [sessions,    setSessions]    = useState<Session[]>([]);
@@ -320,6 +323,32 @@ export function Sidebar({ isAdmin }: SidebarProps) {
         </div>
       )}
 
+      {/* ── "Right now" panel — local time + weather + city ── */}
+      {!collapsed && (userCtx.weather || userCtx.loading) && (
+        <div className="now-panel">
+          <div className="now-icon">
+            <TimeOfDayIcon tod={userCtx.timeOfDay} size={34} />
+          </div>
+          <div className="now-text">
+            <p className="now-time">
+              {describeTimeOfDay(userCtx.timeOfDay)}
+              <span className="now-dot">·</span>
+              <span className="now-temp">
+                {userCtx.weather ? `${userCtx.weather.temperatureC}°` : '—'}
+              </span>
+            </p>
+            <p className="now-place" title={userCtx.weather?.description}>
+              {userCtx.weather?.locationName ?? (userCtx.loading ? 'Locating…' : 'No location')}
+            </p>
+          </div>
+        </div>
+      )}
+      {collapsed && userCtx.weather && (
+        <div className="now-panel-mini" title={`${userCtx.weather.description} · ${userCtx.weather.temperatureC}°`}>
+          <TimeOfDayIcon tod={userCtx.timeOfDay} size={24} />
+        </div>
+      )}
+
       {/* ── Bottom: theme + logout ── */}
       <div className="sidebar-bottom">
         <button
@@ -477,9 +506,45 @@ export function Sidebar({ isAdmin }: SidebarProps) {
           animation: shimmer 1.5s ease-in-out infinite;
         }
 
+        /* ── "Right now" panel ── */
+        .now-panel {
+          display: flex; align-items: center; gap: 10px;
+          padding: 10px 12px;
+          margin: 0 8px;
+          background: var(--weather-tint-strong, var(--color-bg));
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-md);
+          transition: background 1.2s ease;
+        }
+        .now-icon { flex-shrink: 0; line-height: 0; }
+        .now-text { flex: 1; min-width: 0; }
+        .now-time {
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--color-text);
+          margin: 0;
+          display: flex; align-items: center; gap: 5px;
+        }
+        .now-dot { opacity: 0.4; }
+        .now-temp { color: var(--color-primary); font-weight: 700; }
+        .now-place {
+          font-size: 11px;
+          color: var(--color-muted);
+          margin: 1px 0 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .now-panel-mini {
+          display: flex; align-items: center; justify-content: center;
+          padding: 8px 0;
+          margin: 0 8px;
+        }
+
         .sidebar-bottom {
           padding: 8px;
           border-top: 1px solid var(--color-border);
+          margin-top: 8px;
           display: flex; flex-direction: column; gap: 1px;
         }
         .bottom-btn {

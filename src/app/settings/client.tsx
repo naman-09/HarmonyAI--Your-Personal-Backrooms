@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { Sidebar } from '@/components/sidebar';
+import { TimeOfDayIcon, getIconStyle, setIconStyle, type IconStyle } from '@/components/time-of-day-icon';
+import { getTimeOfDay } from '@/hooks/use-user-context';
+import { Camera, Mic, MapPin, Calendar, Bell, Check, X as XIcon } from 'lucide-react';
 
 interface SettingsData {
   trustedContactName:  string;
@@ -19,13 +21,32 @@ const EMERGENCY_CONTACTS = [
   { name: 'Emergency (all)',        number: '112',          note: '24/7' },
 ];
 
+interface Permissions { camera: boolean; microphone: boolean; location: boolean; notifications: boolean; calendar: boolean; }
+const DEFAULT_PERMS: Permissions = { camera: false, microphone: false, location: false, notifications: false, calendar: true };
+
 export default function SettingsClient({ initial }: { initial: SettingsData }) {
-  const router = useRouter();
-  const [form,    setForm]    = useState<SettingsData>(initial);
-  const [saving,  setSaving]  = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [saved,   setSaved]   = useState(false);
-  const [testMsg, setTestMsg] = useState<{ ok: boolean; message: string } | null>(null);
+  const [form,      setForm]      = useState<SettingsData>(initial);
+  const [saving,    setSaving]    = useState(false);
+  const [testing,   setTesting]   = useState(false);
+  const [saved,     setSaved]     = useState(false);
+  const [testMsg,   setTestMsg]   = useState<{ ok: boolean; message: string } | null>(null);
+
+  // Icon-style toggle + permissions display
+  const [iconStyle, setIconStyleState] = useState<IconStyle>('animated');
+  const [perms,     setPerms]     = useState<Permissions>(DEFAULT_PERMS);
+
+  useEffect(() => {
+    setIconStyleState(getIconStyle());
+    try {
+      const raw = localStorage.getItem('harmony-permissions');
+      if (raw) setPerms({ ...DEFAULT_PERMS, ...JSON.parse(raw) });
+    } catch { /* */ }
+  }, []);
+
+  function changeIconStyle(s: IconStyle) {
+    setIconStyleState(s);
+    setIconStyle(s);
+  }
 
   function setField<K extends keyof SettingsData>(key: K, val: SettingsData[K]) {
     setForm((p) => ({ ...p, [key]: val }));
@@ -104,23 +125,101 @@ export default function SettingsClient({ initial }: { initial: SettingsData }) {
     marginBottom: '1rem',
   };
 
+  const currentTod = getTimeOfDay();
+  const permLabels: Array<{ key: keyof Permissions; label: string; icon: React.ReactNode; auto?: boolean }> = [
+    { key: 'location',      label: 'Location',       icon: <MapPin size={14} /> },
+    { key: 'camera',        label: 'Camera',         icon: <Camera size={14} /> },
+    { key: 'microphone',    label: 'Microphone',     icon: <Mic size={14} /> },
+    { key: 'calendar',      label: 'Calendar',       icon: <Calendar size={14} />, auto: true },
+    { key: 'notifications', label: 'Notifications',  icon: <Bell size={14} /> },
+  ];
+
   return (
-    <main style={{ minHeight: '100vh', padding: '2rem 1.5rem', maxWidth: 580, margin: '0 auto' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--color-bg)' }}>
+      <Sidebar />
+      <main style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '2.5rem 2rem 3rem' }}>
+        <div style={{ maxWidth: 640, margin: '0 auto' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 500, marginBottom: 4 }}>Settings</h1>
-          <p style={{ fontSize: 14, color: 'var(--color-muted)' }}>Crisis alerts & preferences</p>
+      <div style={{ marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: 26, fontWeight: 500, marginBottom: 4, fontFamily: "Georgia, 'Fraunces', serif" }}>Settings</h1>
+        <p style={{ fontSize: 14, color: 'var(--color-muted)' }}>Crisis alerts, appearance & preferences</p>
+      </div>
+
+      {/* ── Appearance: icon style picker ── */}
+      <div style={card}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: '0.75rem' }}>Time-of-day icon</h2>
+        <p style={{ fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+          The icon that appears in your greetings. It shifts through the day with the sky.
+          Pick the look you prefer.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          {(['custom', 'animated', 'twemoji'] as IconStyle[]).map((s) => {
+            const active = iconStyle === s;
+            return (
+              <button
+                key={s}
+                onClick={() => changeIconStyle(s)}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                  padding: '14px 8px',
+                  background: active ? 'color-mix(in srgb, var(--color-primary) 10%, var(--color-surface-2))' : 'var(--color-surface-2)',
+                  border: active ? '1.5px solid var(--color-primary)' : '1.5px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  color: 'var(--color-text)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <TimeOfDayIcon tod={currentTod} size={44} style={s} />
+                <span style={{ fontSize: 12, fontWeight: 500, color: active ? 'var(--color-primary)' : 'var(--color-muted)' }}>
+                  {s === 'custom' ? 'Hand-drawn' : s === 'animated' ? 'Animated' : 'Twemoji'}
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <ThemeToggle size={16} />
-          <button
-            onClick={() => router.push('/dashboard')}
-            style={{ fontSize: 13, color: 'var(--color-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
-          >
-            ← Dashboard
-          </button>
+      </div>
+
+      {/* ── Permissions status ── */}
+      <div style={card}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: '0.75rem' }}>Connected services</h2>
+        <p style={{ fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+          Real-time signals Harmony has access to. Change at your browser&apos;s site-settings level to revoke.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {permLabels.map((p) => {
+            const on = perms[p.key];
+            return (
+              <div key={p.key} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 12px',
+                background: 'var(--color-surface-2)',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: 13,
+              }}>
+                <span style={{ color: on ? '#34d399' : 'var(--color-muted)', display: 'flex' }}>{p.icon}</span>
+                <span style={{ flex: 1 }}>{p.label}</span>
+                {p.auto ? (
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
+                    padding: '2px 6px', borderRadius: 4,
+                    background: 'color-mix(in srgb, var(--color-primary) 14%, transparent)',
+                    color: 'var(--color-primary)', textTransform: 'uppercase',
+                  }}>Auto</span>
+                ) : on ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#34d399', fontSize: 12, fontWeight: 600 }}>
+                    <Check size={13} /> On
+                  </span>
+                ) : (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--color-subtle)', fontSize: 12 }}>
+                    <XIcon size={13} /> Off
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -327,6 +426,8 @@ export default function SettingsClient({ initial }: { initial: SettingsData }) {
         </div>
       </div>
 
-    </main>
+        </div>
+      </main>
+    </div>
   );
 }

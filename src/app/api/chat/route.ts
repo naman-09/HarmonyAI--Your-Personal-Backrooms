@@ -24,6 +24,15 @@ const FaceSignals = z.object({
   faceAvailable: z.boolean().default(false),
 });
 
+const UserContextSchema = z.object({
+  timeOfDay:          z.string().optional(),
+  localTime:          z.string().optional(),
+  location:           z.string().optional(),
+  weatherCondition:   z.string().optional(),
+  weatherDescription: z.string().optional(),
+  temperatureC:       z.number().optional(),
+}).optional();
+
 const ChatSchema = z.object({
   sessionId:      z.string().uuid(),
   text:           z.string().min(1).max(2000),
@@ -36,6 +45,7 @@ const ChatSchema = z.object({
     role:    z.enum(['user', 'assistant']),
     content: z.string(),
   })).max(20),
+  userContext: UserContextSchema,
 });
 
 export async function POST(req: NextRequest) {
@@ -58,7 +68,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { sessionId, text, emotionSignals, history } = parsed.data;
+  const { sessionId, text, emotionSignals, history, userContext } = parsed.data;
 
   const session = await db.query.sessions.findFirst({
     where: eq(sessions.sessionId, sessionId),
@@ -96,7 +106,7 @@ export async function POST(req: NextRequest) {
 
       try {
         for await (const chunk of streamHarmonyResponse({
-          text, emotionSignals, history, sessionId, userId,
+          text, emotionSignals, history, sessionId, userId, userContext,
         })) {
           controller.enqueue(encode(chunk));
 

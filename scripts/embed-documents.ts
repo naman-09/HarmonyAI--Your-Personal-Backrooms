@@ -34,25 +34,26 @@ interface Chunk {
 async function setupTable(sql_fn: any) {
   console.log('Setting up pgvector extension and table...');
 
-  await sql_fn`CREATE EXTENSION IF NOT EXISTS vector`;
+  // Use raw string calls for DDL — Neon's template literal parameterises
+  // ${} interpolations which breaks DDL (e.g. vector($1) is invalid SQL)
+  await sql_fn('CREATE EXTENSION IF NOT EXISTS vector');
 
-  await sql_fn`
-    CREATE TABLE IF NOT EXISTS rag_chunks (
-      id         SERIAL PRIMARY KEY,
-      content    TEXT NOT NULL,
-      source     TEXT NOT NULL,
-      metadata   JSONB DEFAULT '{}',
-      embedding  vector(${EMBED_DIM}) NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `;
+  await sql_fn(
+    `CREATE TABLE IF NOT EXISTS rag_chunks (
+       id         SERIAL PRIMARY KEY,
+       content    TEXT NOT NULL,
+       source     TEXT NOT NULL,
+       metadata   JSONB DEFAULT '{}',
+       embedding  vector(${EMBED_DIM}) NOT NULL,
+       created_at TIMESTAMPTZ DEFAULT NOW()
+     )`
+  );
 
-  // Create HNSW index for fast cosine similarity
-  await sql_fn`
-    CREATE INDEX IF NOT EXISTS rag_chunks_embedding_idx
-    ON rag_chunks
-    USING hnsw (embedding vector_cosine_ops)
-  `;
+  await sql_fn(
+    `CREATE INDEX IF NOT EXISTS rag_chunks_embedding_idx
+     ON rag_chunks
+     USING hnsw (embedding vector_cosine_ops)`
+  );
 
   console.log('   ✓ Table rag_chunks ready with HNSW index');
 }

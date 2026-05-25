@@ -11,6 +11,7 @@ import CrisisScreen from '@/components/crisis-screen';
 import { SOSButton } from '@/components/sos-button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { scoreEmotion, type EmotionScore, type EmotionSignals } from '@/lib/emotion';
+import EMOTION_LEXICON from '@/lib/emotion-lexicon.json';
 
 interface Message {
   role:    'user' | 'assistant' | 'crisis' | 'alert';
@@ -27,13 +28,56 @@ const DEFAULT_SIGNALS: EmotionSignals = {
 };
 const DEFAULT_SCORE: EmotionScore = { rage: 0, calm: 1, label: 'calm', displayValue: 1 };
 
+// ── Lexicon-powered text emotion scorer ───────────────────────
+// Uses GoEmotions-derived lexicon when populated; falls back to
+// keyword list so scoring is always non-zero even before lexicon build.
+const FALLBACK_DISTRESS = new Set([
+  'angry','furious','hate','anxious','scared','terrible','awful','hopeless',
+  'worthless','depressed','miserable','frustrated','overwhelmed','stressed',
+  'exhausted','panic','alone','empty','broken','numb','crying','tired',
+  'desperate','afraid','nervous','guilty','shame','embarrassed','helpless',
+  'suicidal','cutting','hurt','pain','crying','grief','loss','dead',
+]);
+const FALLBACK_JOY = new Set([
+  'happy','excited','grateful','joy','love','great','good','wonderful',
+  'thankful','hopeful','proud','calm','peaceful','amazing','better',
+]);
+
+type LexEntry = { distress: number; joy: number; anger: number; sadness: number; fear: number };
+const lexicon = EMOTION_LEXICON as Record<string, LexEntry>;
+const LEXICON_SIZE = Object.keys(lexicon).length;
+
 function estimateTextSentiment(text: string): number {
-  const distressWords = [
-    'angry','furious','hate','anxious','scared','terrible','awful','hopeless',
-    'worthless','depressed','miserable','frustrated','overwhelmed','stressed','exhausted',
-  ];
-  const words = text.toLowerCase().split(/\W+/);
-  return Math.min(words.filter((w) => distressWords.includes(w)).length / 3, 1);
+  const words  = text.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
+  if (words.length === 0) return 0.2;
+
+  if (LEXICON_SIZE > 0) {
+    // ── Lexicon path: weighted average of word distress scores ──
+    let totalWeight = 0;
+    let distressSum = 0;
+    let joySum      = 0;
+    for (const w of words) {
+      const entry = lexicon[w];
+      if (!entry) continue;
+      const weight  = Math.max(entry.distress, entry.joy) + 0.05; // bias toward signal words
+      distressSum  += entry.distress * weight;
+      joySum       += entry.joy      * weight;
+      totalWeight  += weight;
+    }
+    if (totalWeight === 0) return 0.2;  // no signal words found → neutral baseline
+    const distressProb = distressSum / totalWeight;
+    const joyProb      = joySum      / totalWeight;
+    // Final score: distress raised, joy lowers it
+    return Math.min(Math.max(distressProb * 1.4 - joyProb * 0.5, 0), 1);
+  }
+
+  // ── Fallback path (before lexicon is built) ──────────────────
+  let d = 0; let j = 0;
+  for (const w of words) {
+    if (FALLBACK_DISTRESS.has(w)) d++;
+    if (FALLBACK_JOY.has(w)) j++;
+  }
+  return Math.min(Math.max((d / Math.max(words.length * 0.15, 1)) - (j * 0.1), 0), 1);
 }
 
 function tryParseHarmonyJSON(raw: string): Record<string, unknown> | null {

@@ -278,12 +278,32 @@ function MessageBubble({ message, streaming, animate, onAnimDone }: BubbleProps)
 
 // ─── Main chat client ─────────────────────────────────────────
 
+function greetingFor(hour: number): string {
+  if (hour < 5)  return 'Late night';
+  if (hour < 12) return 'Morning';
+  if (hour < 17) return 'Afternoon';
+  if (hour < 21) return 'Evening';
+  return 'Night';
+}
+
+// Conversation starters — gentle prompts that fit Harmony's empathetic voice
+const STARTER_PROMPTS: Array<{ icon: string; label: string; prompt: string }> = [
+  { icon: '💭', label: 'Vent',    prompt: 'I just need to get something off my chest…' },
+  { icon: '🌿', label: 'Unwind',  prompt: "I'm feeling overwhelmed and could use help unwinding." },
+  { icon: '🌙', label: 'Reflect', prompt: 'Help me reflect on how I felt today.' },
+  { icon: '✨', label: 'Cope',    prompt: "I'm anxious — can we talk through it together?" },
+];
+
 export default function ChatClient({
-  sessionId, userId, trustedContactName,
+  sessionId, userId, userName, trustedContactName,
 }: {
-  sessionId: string; userId: number; trustedContactName?: string;
+  sessionId: string; userId: number; userName?: string; trustedContactName?: string;
 }) {
   const router = useRouter();
+
+  // Time-based greeting — set once on mount so it doesn't drift mid-session
+  const [greeting] = useState(() => greetingFor(new Date().getHours()));
+  const firstName  = userName?.trim().split(/\s+/)[0];
 
   const [messages,     setMessages]     = useState<Message[]>([]);
   const [input,        setInput]        = useState('');
@@ -596,10 +616,40 @@ export default function ChatClient({
                 ))}
               </div>
             ) : messages.length === 0 ? (
-              <div className="empty-state">
-                <div style={{ fontSize: 48, marginBottom: 16 }}>💙</div>
-                <p>Share what&apos;s on your mind.</p>
-                <p style={{ fontSize: 13, color: 'var(--color-subtle)', marginTop: 6 }}>This is a safe space</p>
+              <div className="welcome-state">
+                <div className="welcome-burst" aria-hidden>
+                  {/* Harmony sun-burst — echoes the orange starburst from the brand */}
+                  <svg viewBox="0 0 64 64" width="56" height="56">
+                    <g fill="rgba(200,145,90,0.95)">
+                      {Array.from({ length: 12 }).map((_, i) => (
+                        <rect
+                          key={i}
+                          x="30.5" y="4" width="3" height="18" rx="1.5"
+                          transform={`rotate(${i * 30} 32 32)`}
+                          opacity={0.55 + (i % 3) * 0.15}
+                        />
+                      ))}
+                    </g>
+                    <circle cx="32" cy="32" r="6" fill="rgba(200,145,90,1)" />
+                  </svg>
+                </div>
+                <h1 className="welcome-greeting">
+                  {greeting}{firstName ? <>, <span className="welcome-name">{firstName}</span></> : ''}
+                </h1>
+                <p className="welcome-sub">How are you feeling today?</p>
+
+                <div className="starter-chips">
+                  {STARTER_PROMPTS.map((s) => (
+                    <button
+                      key={s.label}
+                      className="starter-chip"
+                      onClick={() => { setInput(s.prompt); inputRef.current?.focus(); }}
+                    >
+                      <span className="starter-chip-icon">{s.icon}</span>
+                      <span>{s.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : (
               messages.map((m, i) => (
@@ -844,6 +894,74 @@ export default function ChatClient({
           align-items: center; justify-content: center;
           flex: 1; color: var(--color-muted); font-size: 15px;
           text-align: center; padding: 2rem;
+        }
+
+        /* ── Claude.ai-style welcome screen (when chat is empty) ── */
+        .welcome-state {
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center;
+          flex: 1; padding: 2rem 1.5rem;
+          animation: welcomeFade 0.5s ease-out;
+        }
+        .welcome-burst {
+          display: flex; align-items: center; justify-content: center;
+          margin-bottom: 1.25rem;
+          animation: burstSpin 22s linear infinite;
+        }
+        .welcome-greeting {
+          font-family: Georgia, 'Fraunces', 'Playfair Display', serif;
+          font-size: clamp(2rem, 5vw, 3.25rem);
+          font-weight: 400;
+          letter-spacing: -0.01em;
+          line-height: 1.1;
+          color: var(--color-text);
+          margin: 0;
+          text-align: center;
+        }
+        .welcome-name {
+          font-style: italic;
+          color: var(--color-primary);
+        }
+        .welcome-sub {
+          font-size: 14px;
+          color: var(--color-muted);
+          margin-top: 0.75rem;
+          text-align: center;
+        }
+        .starter-chips {
+          display: flex; flex-wrap: wrap; gap: 8px;
+          justify-content: center;
+          margin-top: 1.75rem;
+          max-width: 540px;
+        }
+        .starter-chip {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 8px 14px;
+          background: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: 999px;
+          color: var(--color-text);
+          font-size: 13px;
+          font-family: inherit;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .starter-chip:hover {
+          background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+          border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+          transform: translateY(-1px);
+        }
+        .starter-chip-icon { font-size: 14px; }
+
+        @keyframes welcomeFade {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes burstSpin {
+          to { transform: rotate(360deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .welcome-burst { animation: none; }
         }
 
         .loading-skeleton { display: flex; flex-direction: column; gap: 12px; padding: 1rem 0; }

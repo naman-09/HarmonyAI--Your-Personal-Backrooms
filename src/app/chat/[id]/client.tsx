@@ -14,6 +14,7 @@ import { TimeOfDayIcon } from '@/components/time-of-day-icon';
 import { useUserContext, describeTimeOfDay } from '@/hooks/use-user-context';
 import { scoreEmotion, type EmotionScore, type EmotionSignals } from '@/lib/emotion';
 import EMOTION_LEXICON from '@/lib/emotion-lexicon.json';
+import { ArrowLeft } from 'lucide-react';
 
 interface Message {
   role:    'user' | 'assistant' | 'crisis' | 'alert';
@@ -563,6 +564,16 @@ export default function ChatClient({
 
         {/* ════════════════ LEFT PANEL — Voice ════════════════ */}
         <aside className="side-panel side-panel-left">
+          {/* Back to dashboard — keeps the session active, just navigates away */}
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="panel-section back-card"
+            title="Back to dashboard (session stays active)"
+          >
+            <ArrowLeft size={15} />
+            <span>Back to dashboard</span>
+          </button>
+
           <div className="panel-section">
             <p className="panel-label">🎤 Your voice</p>
             <VoiceBars volume={micVolume} active={micOn} />
@@ -790,6 +801,27 @@ export default function ChatClient({
           border-radius: var(--radius-lg);
           padding: 1rem;
         }
+        /* Back-to-dashboard card — sits above the voice panel */
+        .back-card {
+          display: flex; align-items: center; gap: 8px;
+          padding: 11px 14px;
+          margin-bottom: 0.75rem;
+          color: var(--color-muted);
+          font-size: 13px;
+          font-weight: 500;
+          font-family: inherit;
+          cursor: pointer;
+          width: 100%;
+          text-align: left;
+          transition: all 0.15s ease;
+        }
+        .back-card:hover {
+          color: var(--color-primary);
+          border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+          background: color-mix(in srgb, var(--color-primary) 5%, var(--color-surface));
+        }
+        .back-card:hover svg { transform: translateX(-2px); }
+        .back-card svg { transition: transform 0.15s ease; }
         .panel-label {
           font-size: 11px;
           font-weight: 600;

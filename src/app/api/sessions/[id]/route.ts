@@ -27,7 +27,12 @@ export async function GET(
   return NextResponse.json({ session, messages: sessionMessages });
 }
 
-// PATCH /api/sessions/[id] — end a session
+// PATCH /api/sessions/[id]
+//   - Body `{}` (or omitted)      → ends the session (legacy "End session" button)
+//   - Body `{ title: "..." }`     → rename the chat (also clears endedAt? no — keep as-is)
+//   - Body `{ pinned: boolean }`  → pin/unpin
+//   - Body `{ end: true }`        → end (explicit)
+//   Multiple fields allowed in one PATCH.
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -43,12 +48,35 @@ export async function PATCH(
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
+  // Tolerant body parse — empty/invalid body means "end this session" (legacy)
+  let body: { title?: string; pinned?: boolean; end?: boolean } = {};
+  try { body = await req.json(); } catch { /* legacy: no body = end */ }
+
+  const updates: Record<string, unknown> = {};
+
+  if (typeof body.title === 'string') {
+    const trimmed = body.title.trim().slice(0, 80);
+    updates.title = trimmed || null;
+  }
+  if (typeof body.pinned === 'boolean') {
+    updates.pinned = body.pinned;
+  }
+  // Legacy "End session" button sends an empty body; explicit { end: true } also supported.
+  const isLegacyEnd = !body.title && body.pinned === undefined && !('end' in body);
+  if (body.end === true || isLegacyEnd) {
+    updates.endedAt = new Date();
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ ok: true, noop: true });
+  }
+
   await db
     .update(sessions)
-    .set({ endedAt: new Date() })
+    .set(updates)
     .where(and(eq(sessions.sessionId, sessionId), eq(sessions.userId, userId)));
 
-  await invalidateSession(sessionId);
+  if (updates.endedAt) await invalidateSession(sessionId);
 
   return NextResponse.json({ ok: true });
 }

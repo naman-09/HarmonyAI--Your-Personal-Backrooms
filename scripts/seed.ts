@@ -1,8 +1,17 @@
 import { db, users } from '../src/lib/db';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
+// ── Idempotent migrations — run on every dev boot ────────────────
+async function runMigrations() {
+  // sessions.title + sessions.pinned (added for the sidebar chat list)
+  await db.execute(sql`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS title TEXT`);
+  await db.execute(sql`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS pinned BOOLEAN NOT NULL DEFAULT FALSE`);
+}
+
 async function seed() {
+  await runMigrations();
+
   const email = 'naman@harmony.com';
   const password = 'test@1234';
 

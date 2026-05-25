@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { ArrowLeft, ChevronLeft, ChevronRight, Flame, TrendingUp, BookText } from 'lucide-react';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { ChevronLeft, ChevronRight, Flame, TrendingUp, BookText } from 'lucide-react';
+import { Sidebar } from '@/components/sidebar';
 
 interface JournalEntry {
   id:   number;
@@ -52,7 +51,6 @@ function prettyDate(dateStr: string): string {
 }
 
 export default function JournalClient() {
-  const router = useRouter();
   const [entries, setEntries]       = useState<JournalEntry[]>([]);
   const [loading, setLoading]       = useState(true);
   const [activeDate, setActiveDate] = useState(() => dateToStr(new Date()));
@@ -175,20 +173,16 @@ export default function JournalClient() {
   const moodLevel = mood ? MOOD_LEVELS[mood - 1] : null;
 
   return (
-    <main className="journal-main">
-      {/* ── Header ──────────────────────────────────────────── */}
-      <div className="page-header">
-        <div>
-          <h1>Mood Journal</h1>
-          <p>One check-in. Two minutes. Compounds over weeks.</p>
+    <div className="app-shell">
+      <Sidebar />
+      <main className="journal-main">
+        {/* ── Header ──────────────────────────────────────────── */}
+        <div className="page-header">
+          <div>
+            <h1>Mood Journal</h1>
+            <p>One check-in. Two minutes. Compounds over weeks.</p>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <ThemeToggle size={16} />
-          <button onClick={() => router.push('/dashboard')} className="back-link">
-            <ArrowLeft size={14} /> Dashboard
-          </button>
-        </div>
-      </div>
 
       {/* ── Stat strip ──────────────────────────────────────── */}
       <div className="stat-strip">
@@ -422,11 +416,13 @@ export default function JournalClient() {
       {/* ── Styles ─────────────────────────────────────────── */}
       <style>{`
         .journal-main {
-          min-height: 100vh;
-          padding: 2rem 1.5rem 3rem;
-          max-width: 640px;
-          margin: 0 auto;
+          flex: 1;
+          min-width: 0;
+          overflow-y: auto;
+          padding: 2.5rem 2rem 3rem;
         }
+        .journal-main > * { max-width: 640px; margin-left: auto; margin-right: auto; }
+        .app-shell { display: flex; min-height: 100vh; background: var(--color-bg); }
         .page-header {
           display: flex; align-items: flex-start; justify-content: space-between;
           gap: 1rem; margin-bottom: 1.5rem;
@@ -797,7 +793,8 @@ export default function JournalClient() {
           .stat-pill { padding: 10px 12px; }
         }
       `}</style>
-    </main>
+      </main>
+    </div>
   );
 }
 

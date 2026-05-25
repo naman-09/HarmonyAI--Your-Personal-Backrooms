@@ -23,13 +23,14 @@ export async function POST(req: NextRequest) {
 }
 
 // GET /api/sessions — list sessions for the current user
+//   Pinned chats float to the top; everything else by most-recent first.
 export async function GET(req: NextRequest) {
   const userId = parseInt(req.headers.get('x-user-id') || '0', 10);
 
   const userSessions = await db.query.sessions.findMany({
     where: eq(sessions.userId, userId),
-    orderBy: [desc(sessions.createdAt)],
-    limit: 20,
+    orderBy: [desc(sessions.pinned), desc(sessions.createdAt)],
+    limit: 50,
   });
 
   return NextResponse.json({ sessions: userSessions });

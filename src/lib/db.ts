@@ -26,6 +26,8 @@ export const sessions = pgTable('sessions', {
   id:              serial('id').primaryKey(),
   userId:          integer('user_id').references(() => users.id).notNull(),
   sessionId:       text('session_id').unique().notNull(),
+  title:           text('title'),                                  // AI- or user-set
+  pinned:          boolean('pinned').default(false).notNull(),
   emotionTimeline: jsonb('emotion_timeline').$type<any[]>().default([]).notNull(),
   riskLevel:       text('risk_level').default('none').notNull(),
   crisisLevel:     integer('crisis_level').default(0).notNull(),

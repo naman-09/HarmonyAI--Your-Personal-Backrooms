@@ -1,10 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ChevronDown, Search, Wind, Anchor, Phone, BookOpen, Dumbbell, ArrowLeft } from 'lucide-react';
+import { ChevronDown, Search, Wind, Anchor, Phone, BookOpen, Dumbbell } from 'lucide-react';
 import { BreathingExercise } from '@/components/breathing-exercise';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { Sidebar } from '@/components/sidebar';
 
 type ResourceType = 'article' | 'exercise';
 interface Resource {
@@ -292,7 +291,6 @@ const CATEGORY_LABELS: Record<string, { emoji: string; label: string }> = {
 };
 
 export default function ResourcesClient() {
-  const router = useRouter();
   const [filter, setFilter]               = useState('all');
   const [search, setSearch]               = useState('');
   const [showBreathing, setShowBreathing] = useState(false);
@@ -312,20 +310,16 @@ export default function ResourcesClient() {
   }, [filter, search]);
 
   return (
-    <main className="resources-main">
-      {/* ── Header ──────────────────────────────────────────── */}
-      <div className="page-header">
-        <div>
-          <h1>Resources</h1>
-          <p>Practices and reading for whatever you&apos;re carrying today</p>
+    <div className="app-shell">
+      <Sidebar />
+      <main className="resources-main">
+        {/* ── Header ──────────────────────────────────────────── */}
+        <div className="page-header">
+          <div>
+            <h1>Resources</h1>
+            <p>Practices and reading for whatever you&apos;re carrying today</p>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <ThemeToggle size={16} />
-          <button onClick={() => router.push('/dashboard')} className="back-link">
-            <ArrowLeft size={14} /> Dashboard
-          </button>
-        </div>
-      </div>
 
       {/* ── "Need help now" quick actions ──────────────────── */}
       <section className="quick-actions">
@@ -473,11 +467,13 @@ export default function ResourcesClient() {
       {/* ── Styles ───────────────────────────────────────── */}
       <style>{`
         .resources-main {
-          min-height: 100vh;
-          padding: 2rem 1.5rem 3rem;
-          max-width: 720px;
-          margin: 0 auto;
+          flex: 1;
+          min-width: 0;
+          overflow-y: auto;
+          padding: 2.5rem 2rem 3rem;
         }
+        .resources-main > * { max-width: 720px; margin-left: auto; margin-right: auto; }
+        .app-shell { display: flex; min-height: 100vh; background: var(--color-bg); }
 
         .page-header {
           display: flex; align-items: flex-start; justify-content: space-between;
@@ -733,6 +729,7 @@ export default function ResourcesClient() {
           .quick-grid { grid-template-columns: 1fr; }
         }
       `}</style>
-    </main>
+      </main>
+    </div>
   );
 }

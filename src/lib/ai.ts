@@ -367,3 +367,54 @@ export async function* streamHarmonyResponse(
     }
   }
 }
+
+// ─── Title generation ────────────────────────────────────────
+// Generates a concise 3-6 word title for a chat after the first user/assistant
+// exchange. Non-blocking — callers should `.catch(() => {})` and not await.
+export async function generateChatTitle(
+  firstUserMessage: string,
+  firstAssistantReply: string,
+): Promise<string | null> {
+  if (!firstUserMessage.trim()) return null;
+
+  // Heuristic fallback used when the model can't be reached
+  const heuristic = firstUserMessage
+    .replace(/[\n\r]+/g, ' ')
+    .replace(/[^\p{L}\p{N}\s,.'-]/gu, '')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 6)
+    .join(' ');
+
+  const canUse = await canUseConfiguredModel();
+  if (!canUse) return heuristic || 'New conversation';
+
+  const prompt = `Summarize this conversation into a SHORT chat title — 3 to 6 words MAX, no quotes, no punctuation at the end, no emoji, capitalize like a sentence (only the first word).
+
+Person: ${firstUserMessage.slice(0, 400)}
+Harmony: ${firstAssistantReply.slice(0, 400)}
+
+Title (3-6 words):`;
+
+  try {
+    const res = await client.chat.completions.create({
+      model: MODEL,
+      max_tokens: 24,
+      temperature: 0.4,
+      messages: [{ role: 'user', content: prompt }],
+    }, { timeout: 20_000 });
+
+    const raw = res.choices?.[0]?.message?.content?.trim() ?? '';
+    // Strip quotes, leading "Title:" prefix, trailing punctuation
+    const cleaned = raw
+      .replace(/^["'`]+|["'`]+$/g, '')
+      .replace(/^title\s*:\s*/i, '')
+      .replace(/[.?!]+$/, '')
+      .trim()
+      .slice(0, 60);
+
+    return cleaned || heuristic || 'New conversation';
+  } catch {
+    return heuristic || 'New conversation';
+  }
+}

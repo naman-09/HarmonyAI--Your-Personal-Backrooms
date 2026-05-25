@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, Award, Flame, MessageCircle, BookOpen, Download, Sparkles, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { Award, Flame, MessageCircle, BookOpen, Download, Sparkles, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Sidebar } from '@/components/sidebar';
 
 interface Stats {
   totalSessions:    number;
@@ -18,7 +17,6 @@ interface Stats {
 }
 
 export default function ProgressClient() {
-  const router = useRouter();
   const [stats,   setStats]   = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -80,20 +78,16 @@ export default function ProgressClient() {
   }
 
   return (
-    <main className="progress-main">
-      {/* ── Header ──────────────────────────────────────────── */}
-      <div className="page-header">
-        <div>
-          <h1>Your progress</h1>
-          <p>Patterns over time — not a scorecard, just a mirror.</p>
+    <div className="app-shell">
+      <Sidebar />
+      <main className="progress-main">
+        {/* ── Header ──────────────────────────────────────────── */}
+        <div className="page-header">
+          <div>
+            <h1>Your progress</h1>
+            <p>Patterns over time — not a scorecard, just a mirror.</p>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <ThemeToggle size={16} />
-          <button onClick={() => router.push('/dashboard')} className="back-link">
-            <ArrowLeft size={14} /> Dashboard
-          </button>
-        </div>
-      </div>
 
       {loading ? (
         <ProgressSkeleton />
@@ -305,11 +299,12 @@ export default function ProgressClient() {
       {/* ── Styles ─────────────────────────────────────────── */}
       <style>{`
         .progress-main {
-          min-height: 100vh;
-          padding: 2rem 1.5rem 3rem;
-          max-width: 640px;
-          margin: 0 auto;
+          flex: 1;
+          min-width: 0;
+          overflow-y: auto;
+          padding: 2.5rem 2rem 3rem;
         }
+        .progress-main > * { max-width: 640px; margin-left: auto; margin-right: auto; }
         .page-header {
           display: flex; align-items: flex-start; justify-content: space-between;
           gap: 1rem; margin-bottom: 1.5rem;
@@ -641,8 +636,16 @@ export default function ProgressClient() {
           .glance-grid { gap: 6px; }
           .glance-card { padding: 12px 14px; }
         }
+
+        /* ── App shell (shared with sidebar) ── */
+        .app-shell {
+          display: flex;
+          min-height: 100vh;
+          background: var(--color-bg);
+        }
       `}</style>
-    </main>
+      </main>
+    </div>
   );
 }
 

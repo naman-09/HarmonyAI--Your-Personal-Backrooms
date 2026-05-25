@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { db, sessions, messages } from '@/lib/db';
-import { streamHarmonyResponse } from '@/lib/ai';
+import { streamHarmonyResponse, generateChatTitle } from '@/lib/ai';
 import { scoreEmotion } from '@/lib/emotion';
 import { chatRateLimit } from '@/lib/redis';
 import { triggerLevelAlert, getUserAlertSettings } from '@/lib/crisis-alert';
@@ -157,6 +157,28 @@ export async function POST(req: NextRequest) {
                 emotionTimeline: [...timeline, { t: Date.now(), ...emotionScore }],
               })
               .where(eq(sessions.id, session.id));
+
+            // ── Auto-name the chat after the first user/assistant exchange.
+            //   Fire-and-forget so we don't block the response stream.
+            //   `session.title` was loaded before this exchange, so it's `null`
+            //   on the very first turn even though we wrote the user message
+            //   above.
+            if (!session.title && history.length === 0 && assistantContent) {
+              generateChatTitle(text, assistantContent)
+                .then(async (title) => {
+                  if (!title) return;
+                  // Don't clobber a title the user may have set in parallel
+                  const fresh = await db.query.sessions.findFirst({
+                    where: eq(sessions.id, session.id),
+                  });
+                  if (fresh && !fresh.title) {
+                    await db.update(sessions)
+                      .set({ title })
+                      .where(eq(sessions.id, session.id));
+                  }
+                })
+                .catch(() => { /* title is best-effort */ });
+            }
           }
         }
       } catch (err) {

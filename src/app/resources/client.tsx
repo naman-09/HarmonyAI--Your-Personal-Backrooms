@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { ChevronDown, Search, Wind, Anchor, Phone, BookOpen, Dumbbell } from 'lucide-react';
 import { BreathingExercise } from '@/components/breathing-exercise';
 import { Sidebar } from '@/components/sidebar';
+import { ClientStyle } from '@/components/client-style';
 
 type ResourceType = 'article' | 'exercise';
 interface Resource {
@@ -465,7 +466,7 @@ export default function ResourcesClient() {
       </p>
 
       {/* ── Styles ───────────────────────────────────────── */}
-      <style>{`
+      <ClientStyle>{`
         .resources-main {
           flex: 1;
           min-width: 0;
@@ -481,7 +482,7 @@ export default function ResourcesClient() {
         }
         .page-header h1 {
           font-size: 26px; font-weight: 500; margin: 0 0 4px;
-          font-family: Georgia, 'Fraunces', serif;
+          font-family: var(--font-serif);
         }
         .page-header p {
           font-size: 14px; color: var(--color-muted); margin: 0;
@@ -728,7 +729,7 @@ export default function ResourcesClient() {
           .resources-main { padding: 1.25rem 1rem 2rem; }
           .quick-grid { grid-template-columns: 1fr; }
         }
-      `}</style>
+      `}</ClientStyle>
       </main>
     </div>
   );

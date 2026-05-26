@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useThemeEngine } from '@/lib/theme/store';
 import type { ParticleType } from '@/lib/theme/types';
+import { ClientStyle } from '@/components/client-style';
 
 /**
  * Sits at the back of every page (z-index: -10) and renders a
@@ -42,7 +43,7 @@ export function ThemedBackground() {
         </motion.div>
       </AnimatePresence>
 
-      <style>{`
+      <ClientStyle>{`
         .themed-bg-host {
           position: fixed;
           inset: 0;
@@ -60,7 +61,7 @@ export function ThemedBackground() {
           inset: 0;
           pointer-events: none;
         }
-      `}</style>
+      `}</ClientStyle>
     </div>
   );
 }
@@ -152,13 +153,13 @@ function ParticleLayer({ type, density }: ParticleProps) {
       particles.push(p);
     }
 
-    // Colors per type (kept neutral so the gradient does the heavy lifting)
+    // Particle colours tuned for the NEBULA palette
     const color = {
-      rain:      'rgba(200, 220, 255, ',
-      snow:      'rgba(245, 250, 255, ',
-      fireflies: 'rgba(255, 220, 140, ',
-      dust:      'rgba(220, 180, 130, ',
-      none:      'rgba(255, 255, 255, ',
+      rain:      'rgba(127, 201, 154, ',   // mint aqua rain
+      snow:      'rgba(203, 229, 142, ',   // seafoam snowflakes
+      fireflies: 'rgba(161, 206, 63,  ',   // bioluminescent lime
+      dust:      'rgba(31,  168, 110, ',   // viridian dust
+      none:      'rgba(203, 229, 142, ',
     }[type];
 
     let t = 0;

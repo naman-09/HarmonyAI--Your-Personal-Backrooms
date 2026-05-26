@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db, users } from '@/lib/db';
+import { getFastAPIHealth } from '@/lib/fastapi';
 import { sql } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
@@ -23,6 +24,9 @@ export async function GET() {
   } catch {
     checks.ollama = 'error';
   }
+
+  const fastapi = await getFastAPIHealth();
+  if (fastapi !== 'disabled') checks.fastapi = fastapi;
 
   return NextResponse.json(
     { status: healthy ? 'healthy' : 'degraded', checks },

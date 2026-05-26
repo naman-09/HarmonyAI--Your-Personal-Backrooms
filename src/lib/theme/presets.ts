@@ -1,229 +1,233 @@
-// ─── 11 theme presets keyed to (time × weather × season) ────
-// Hex codes match the Cinematic Ambient Warmth psychology palette.
-// All gradients are de-saturated; warm browns + cool teals for calm.
+// ─── 11 theme presets keyed to (time × weather × season) ────────
+// All gradients built from the NEBULA palette:
+//   #013026  Deep Ocean Forest
+//   #014760  Midnight Lagoon
+//   #107e57  Viridian
+//   #a1ce3f  Bioluminescent Lime
+//   #cbe58e  Seafoam Highlight
 
 import type { ThemePreset } from './types';
 
 export const PRESETS: ThemePreset[] = [
-  // ── Cozy rain — soft de-saturated blue → teal ─────────────
+  // ── Cozy rain — deep teal into midnight ──────────────────
   {
     id:          'cozy_rain',
     name:        'Cozy rain',
-    description: 'Soft blue-grey, gentle teal — sheltered and quiet.',
+    description: 'Deep ocean teal — sheltered and quiet.',
     match: {
       weatherConditions: ['rain'],
     },
     priority: 50,
     palette: {
-      gradient: ['#2D4059', '#345766', '#3D7068'],
-      overlay:  'radial-gradient(circle at 30% 20%, rgba(168, 213, 204, 0.08), transparent 60%)',
-      glow:     '#A8D5CC',
-      tint:     'rgba(45, 64, 89, 0.20)',
+      gradient: ['#011a28', '#013a40', '#014760'],
+      overlay:  'radial-gradient(circle at 30% 20%, rgba(127, 201, 154, 0.08), transparent 60%)',
+      glow:     '#7bc99a',
+      tint:     'rgba(1, 26, 40, 0.22)',
       mood:     'Sheltered, contemplative.',
     },
     particles:       'rain',
     particleDensity: 0.7,
   },
 
-  // ── Thunderstorm — charcoal → slate with muted lavender accent ──
+  // ── Thunderstorm — abyss with faint lime lightning ───────
   {
     id:          'storm_alert',
     name:        'Storm',
-    description: 'Dramatic ambience with muted lavender lightning.',
+    description: 'Ocean abyss with bioluminescent lightning.',
     match: {
       weatherConditions: ['storm'],
     },
     priority: 60,
     palette: {
-      gradient: ['#232931', '#2E343E', '#393E46'],
-      overlay:  'radial-gradient(circle at 70% 30%, rgba(184, 198, 255, 0.12), transparent 50%)',
-      glow:     '#B8C6FF',
-      tint:     'rgba(35, 41, 49, 0.30)',
+      gradient: ['#080f0a', '#010f12', '#012030'],
+      overlay:  'radial-gradient(circle at 70% 30%, rgba(161, 206, 63, 0.10), transparent 50%)',
+      glow:     '#a1ce3f',
+      tint:     'rgba(8, 15, 10, 0.32)',
       mood:     'Tension without threat.',
     },
     particles:       'rain',
     particleDensity: 1.0,
   },
 
-  // ── Monsoon (Jul–Sep + rain/clouds/fog) ───────────────────
+  // ── Monsoon — deep forest, soft mist ────────────────────
   {
     id:          'monsoon_calm',
     name:        'Monsoon',
-    description: 'Deep teal, soft mist — petrichor weather.',
+    description: 'Deep forest green — petrichor and mist.',
     match: {
       weatherConditions: ['rain', 'cloudy', 'fog'],
       seasons:           ['monsoon'],
     },
     priority: 70,
     palette: {
-      gradient: ['#1F3A3F', '#2D5358', '#3D7068'],
-      overlay:  'radial-gradient(circle at 50% 80%, rgba(168, 213, 204, 0.10), transparent 60%)',
-      glow:     '#6FA89D',
-      tint:     'rgba(61, 112, 104, 0.18)',
+      gradient: ['#012a1e', '#013026', '#014760'],
+      overlay:  'radial-gradient(circle at 50% 80%, rgba(31, 168, 110, 0.10), transparent 60%)',
+      glow:     '#1fa86e',
+      tint:     'rgba(1, 42, 30, 0.20)',
       mood:     'Slow down.',
     },
     particles:       'rain',
     particleDensity: 0.5,
   },
 
-  // ── Snow — pale icy → twilight ────────────────────────────
+  // ── Snow — pale ocean-tinted flakes ──────────────────────
   {
     id:          'winter_snow',
     name:        'Snowfall',
-    description: 'Cool blues, gentle flakes, stillness.',
+    description: 'Icy ocean blue — quiet flakes over the lagoon.',
     match: {
       weatherConditions: ['snow'],
     },
     priority: 60,
     palette: {
-      gradient: ['#4A5C70', '#3A4858', '#1E2022'],
-      overlay:  'radial-gradient(circle at 40% 30%, rgba(201, 214, 223, 0.16), transparent 55%)',
-      glow:     '#C9D6DF',
-      tint:     'rgba(82, 97, 107, 0.20)',
+      gradient: ['#021f2e', '#013a50', '#014760'],
+      overlay:  'radial-gradient(circle at 40% 30%, rgba(203, 229, 142, 0.10), transparent 55%)',
+      glow:     '#cbe58e',
+      tint:     'rgba(2, 31, 46, 0.20)',
       mood:     'Stillness.',
     },
     particles:       'snow',
     particleDensity: 0.5,
   },
 
-  // ── Winter clear (cold, no precipitation) ─────────────────
+  // ── Winter clear — midnight lagoon, crisp ────────────────
   {
     id:          'winter_clear',
     name:        'Winter clear',
-    description: 'Crisp slate with the smallest hint of warmth.',
+    description: 'Crisp midnight lagoon with a faint lime horizon.',
     match: {
       seasons: ['winter'],
       tempC:   { max: 18 },
     },
     priority: 30,
     palette: {
-      gradient: ['#52616B', '#3A4654', '#1E2022'],
-      overlay:  'radial-gradient(circle at 80% 20%, rgba(224, 164, 88, 0.05), transparent 60%)',
-      glow:     '#C9D6DF',
-      tint:     'rgba(82, 97, 107, 0.12)',
+      gradient: ['#013040', '#014760', '#01243a'],
+      overlay:  'radial-gradient(circle at 80% 20%, rgba(161, 206, 63, 0.06), transparent 60%)',
+      glow:     '#cbe58e',
+      tint:     'rgba(1, 48, 64, 0.14)',
       mood:     'Bright cold.',
     },
     particles:       'none',
     particleDensity: 0,
   },
 
-  // ── Fog — muted greys, world reduced ──────────────────────
+  // ── Fog — ocean floor, reduced visibility ────────────────
   {
     id:          'foggy_morning',
     name:        'Fog',
-    description: 'Soft edges, inward weather.',
+    description: 'Ocean floor haze — world reduced to shapes.',
     match: {
       weatherConditions: ['fog'],
     },
     priority: 45,
     palette: {
-      gradient: ['#3A3C42', '#32343A', '#2A2C30'],
-      overlay:  'radial-gradient(circle at 50% 50%, rgba(216, 196, 182, 0.10), transparent 80%)',
-      glow:     '#D8C4B6',
-      tint:     'rgba(58, 60, 66, 0.18)',
+      gradient: ['#02201a', '#012d25', '#013026'],
+      overlay:  'radial-gradient(circle at 50% 50%, rgba(203, 229, 142, 0.07), transparent 80%)',
+      glow:     '#cbe58e',
+      tint:     'rgba(2, 32, 26, 0.18)',
       mood:     'Inward.',
     },
     particles:       'none',
     particleDensity: 0,
   },
 
-  // ── Heatwave / summer scorch ──────────────────────────────
+  // ── Heatwave — warm lime over viridian ───────────────────
   {
     id:          'heatwave',
     name:        'Heat',
-    description: 'Warm coral and golden peach.',
+    description: 'Scorching lime over the deep forest.',
     match: {
       seasons: ['summer'],
       tempC:   { min: 35 },
     },
     priority: 55,
     palette: {
-      gradient: ['#E07A5F', '#E89B6A', '#F2CC8F'],
-      overlay:  'radial-gradient(circle at 70% 30%, rgba(255, 204, 136, 0.12), transparent 55%)',
-      glow:     '#FFCC88',
-      tint:     'rgba(224, 122, 95, 0.12)',
-      mood:     'Bright and heavy.',
+      gradient: ['#1a3a10', '#2d6020', '#a1ce3f'],
+      overlay:  'radial-gradient(circle at 70% 30%, rgba(203, 229, 142, 0.14), transparent 55%)',
+      glow:     '#cbe58e',
+      tint:     'rgba(26, 58, 16, 0.14)',
+      mood:     'Bright and alive.',
     },
     particles:       'dust',
     particleDensity: 0.3,
   },
 
-  // ── Sunset / dawn (golden hour) ───────────────────────────
+  // ── Sunset / dawn — viridian to deep forest gold ─────────
   {
     id:          'sunset_golden',
     name:        'Golden hour',
-    description: 'Coral → soft rose. The prettiest light of the day.',
+    description: 'Viridian dusk — ocean catching the last light.',
     match: {
       timePhases: ['dusk', 'early-morning'],
       weatherConditions: ['clear', 'cloudy'],
     },
     priority: 40,
     palette: {
-      gradient: ['#F08A5D', '#D45D62', '#B83B5E'],
-      overlay:  'radial-gradient(circle at 75% 75%, rgba(255, 204, 136, 0.18), transparent 50%)',
-      glow:     '#FFCC88',
-      tint:     'rgba(240, 138, 93, 0.15)',
+      gradient: ['#0d5c3a', '#107e57', '#1fa86e'],
+      overlay:  'radial-gradient(circle at 75% 75%, rgba(203, 229, 142, 0.16), transparent 50%)',
+      glow:     '#cbe58e',
+      tint:     'rgba(13, 92, 58, 0.16)',
       mood:     'Day softens.',
     },
     particles:       'none',
     particleDensity: 0,
   },
 
-  // ── Bright midday clear — warm amber over deep espresso ──
+  // ── Bright midday — deep forest, lime accent ─────────────
   {
     id:          'clear_bright',
     name:        'Clear bright',
-    description: 'Warm amber over the cinematic espresso base.',
+    description: 'Deep ocean forest under open sky.',
     match: {
       timePhases:        ['daylight', 'morning', 'afternoon'],
       weatherConditions: ['clear', 'cloudy'],
     },
     priority: 20,
     palette: {
-      gradient: ['#1D110D', '#311C16', '#120907'],
-      overlay:  'radial-gradient(circle at 30% 25%, rgba(255, 204, 136, 0.10), transparent 55%)',
-      glow:     '#E0A458',
-      tint:     'rgba(224, 164, 88, 0.06)',
+      gradient: ['#013026', '#014760', '#010f0a'],
+      overlay:  'radial-gradient(circle at 30% 25%, rgba(161, 206, 63, 0.09), transparent 55%)',
+      glow:     '#a1ce3f',
+      tint:     'rgba(161, 206, 63, 0.05)',
       mood:     'Open day.',
     },
     particles:       'none',
     particleDensity: 0,
   },
 
-  // ── Evening / night — calm depth with safety ──────────────
+  // ── Evening / night — deep abyss, firefly glow ───────────
   {
     id:          'night_calm',
     name:        'Night calm',
-    description: 'Deep purple-brown with a quiet moon halo.',
+    description: 'Ocean abyss with bioluminescent fireflies.',
     match: {
       timePhases: ['evening', 'night'],
     },
     priority: 25,
     palette: {
-      gradient: ['#1B1325', '#251A35', '#2A1813'],
-      overlay:  'radial-gradient(circle at 80% 20%, rgba(255, 204, 136, 0.08), transparent 60%)',
-      glow:     '#FFCC88',
-      tint:     'rgba(27, 19, 37, 0.22)',
+      gradient: ['#010f0a', '#012030', '#013026'],
+      overlay:  'radial-gradient(circle at 80% 20%, rgba(161, 206, 63, 0.07), transparent 60%)',
+      glow:     '#a1ce3f',
+      tint:     'rgba(1, 15, 10, 0.24)',
       mood:     'Wind down.',
     },
     particles:       'fireflies',
     particleDensity: 0.4,
   },
 
-  // ── Late-night meditative — near-black with faint glow ────
+  // ── Late-night meditative — near pitch-black lagoon ───────
   {
     id:          'late_night_meditative',
     name:        'Late night',
-    description: 'For the small hours. Hush.',
+    description: 'Hush — deep beneath the ocean surface.',
     match: {
       timePhases: ['night'],
     },
     priority: 24,
     palette: {
-      gradient: ['#0A0612', '#120907', '#1B1325'],
-      overlay:  'radial-gradient(circle at 50% 50%, rgba(168, 213, 204, 0.06), transparent 70%)',
-      glow:     '#A8D5CC',
-      tint:     'rgba(10, 6, 18, 0.20)',
+      gradient: ['#010809', '#010f0a', '#012018'],
+      overlay:  'radial-gradient(circle at 50% 50%, rgba(31, 168, 110, 0.05), transparent 70%)',
+      glow:     '#1fa86e',
+      tint:     'rgba(1, 8, 9, 0.22)',
       mood:     'Hush.',
     },
     particles:       'fireflies',
@@ -231,5 +235,4 @@ export const PRESETS: ThemePreset[] = [
   },
 ];
 
-/** Fallback if scoring matches nothing (safety net). */
 export const FALLBACK_PRESET: ThemePreset = PRESETS.find((p) => p.id === 'clear_bright')!;

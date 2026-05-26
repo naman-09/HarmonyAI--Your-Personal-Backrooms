@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Camera, Mic, MapPin, Calendar, Bell, Check, X as XIcon, Shield, Sparkles, MessageCircle } from 'lucide-react';
+import { ClientStyle } from '@/components/client-style';
 
 const PERM_KEY = 'harmony-permissions';
 
@@ -233,7 +234,7 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
         )}
       </div>
 
-      <style>{`
+      <ClientStyle>{`
         .onboard-wrap {
           position: fixed; inset: 0;
           background: var(--color-bg);
@@ -273,7 +274,7 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
           color: var(--color-primary);
         }
         h1 {
-          font-family: Georgia, 'Fraunces', serif;
+          font-family: var(--font-serif);
           font-size: 26px;
           font-weight: 500;
           margin: 0 0 0.75rem;
@@ -388,7 +389,7 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
           margin: 0 0 1.5rem;
           text-align: center;
         }
-      `}</style>
+      `}</ClientStyle>
     </div>
   );
 }

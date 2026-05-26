@@ -7,6 +7,7 @@ import { Onboarding } from '@/components/onboarding';
 import { Sidebar } from '@/components/sidebar';
 import { TimeOfDayIcon } from '@/components/time-of-day-icon';
 import { useUserContext } from '@/hooks/use-user-context';
+import { ClientStyle } from '@/components/client-style';
 
 interface Stats {
   totalSessions:    number;
@@ -35,12 +36,22 @@ const MOOD_LEVELS = [
   { emoji: '✨', label: 'Glowing',   color: '#bcc73a' },
 ];
 
+// ── Apple emoji CDN — cross-platform consistency ─────────────
+function emojiImgSrc(emoji: string): string {
+  const cp = [...emoji]
+    .map(c => c.codePointAt(0)!)
+    .filter(n => n !== 0xFE0F)
+    .map(n => n.toString(16))
+    .join('-');
+  return `https://cdn.jsdelivr.net/npm/emoji-datasource-apple@15.1.2/img/apple/64/${cp}.png`;
+}
+
 function todayStr(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export default function DashboardClient({ userId, isAdmin }: { userId: number; isAdmin?: boolean }) {
+export default function DashboardClient({ userId, isAdmin, userName }: { userId: number; isAdmin?: boolean; userName?: string }) {
   const router = useRouter();
   const userCtx = useUserContext();
   const [stats,       setStats]       = useState<Stats | null>(null);
@@ -107,7 +118,8 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
     return <Onboarding onComplete={() => setShowOnboard(false)} />;
   }
 
-  const greeting = greetingFor(new Date().getHours());
+  const greeting   = greetingFor(new Date().getHours());
+  const firstName  = userName?.trim().split(/\s+/)[0];
   const todayLevel = todayMood ? MOOD_LEVELS[todayMood.mood - 1] : null;
 
   return (
@@ -131,9 +143,11 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
           {/* ── Hero greeting ── */}
           <header className="dash-hero">
             <div className="dash-burst" aria-hidden>
-              <TimeOfDayIcon tod={userCtx.timeOfDay} size={56} />
+              <TimeOfDayIcon tod={userCtx.timeOfDay} size={64} />
             </div>
-            <h1 className="dash-title">{greeting}</h1>
+            <h1 className="dash-title">
+              {greeting}{firstName ? <>, <em className="dash-name">{firstName}</em></> : ''}
+            </h1>
             <p className="dash-sub">
               {userCtx.weather?.locationName && userCtx.weather?.description ? (
                 <>It&apos;s {userCtx.weather.description.toLowerCase()} in {userCtx.weather.locationName} · {userCtx.weather.temperatureC}°</>
@@ -159,7 +173,7 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
               >
                 <p className="snap-label">Today&apos;s mood</p>
                 <div className="snap-mood-display">
-                  <span className="snap-mood-emoji">{todayLevel.emoji}</span>
+                  <img src={emojiImgSrc(todayLevel.emoji)} alt={todayLevel.label} width={38} height={38} className="snap-mood-emoji" />
                   <div>
                     <p className="snap-mood-name" style={{ color: todayLevel.color }}>
                       {todayLevel.label}
@@ -238,7 +252,7 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
       </main>
 
       {/* ── Styles ───────────────────────────────────────── */}
-      <style>{`
+      <ClientStyle>{`
         .app-shell {
           display: flex;
           min-height: 100vh;
@@ -287,15 +301,21 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
         .dash-burst {
           display: flex; justify-content: center;
           margin-bottom: 0.75rem;
+          animation: dashBurst 38s linear infinite;
         }
+        @media (prefers-reduced-motion: reduce) { .dash-burst { animation: none; } }
         .dash-title {
-          font-family: Georgia, 'Fraunces', serif;
+          font-family: var(--font-serif);
           font-size: clamp(1.8rem, 4vw, 2.6rem);
           font-weight: 400;
           letter-spacing: -0.01em;
           line-height: 1.1;
           color: var(--color-text);
           margin: 0;
+        }
+        .dash-name {
+          font-style: italic;
+          color: var(--color-primary);
         }
         .dash-sub {
           font-size: 14px;
@@ -326,7 +346,7 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
         .snap-card:hover {
           transform: translateY(-2px);
           border-color: var(--color-border-2);
-          box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.18);
         }
         .snap-card-tall {
           grid-row: span 1;
@@ -374,7 +394,7 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
           font-weight: 500;
           margin: 0 0 auto;
           color: var(--color-text);
-          font-family: Georgia, 'Fraunces', serif;
+          font-family: var(--font-serif);
         }
         .snap-link {
           display: inline-flex; align-items: center; gap: 4px;
@@ -396,8 +416,8 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
           margin: 0 0 6px;
         }
         .snap-mood-emoji {
-          font-size: 38px;
-          line-height: 1;
+          width: 38px; height: 38px;
+          flex-shrink: 0;
         }
         .snap-mood-name {
           font-size: 17px;
@@ -428,19 +448,19 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
           padding: 11px 22px;
           background: var(--color-primary);
           border: none;
-          border-radius: 999px;
-          color: #fff;
+          border-radius: var(--radius-pill);
+          color: #011a10;
           font-size: 14px;
-          font-weight: 500;
+          font-weight: 600;
           cursor: pointer;
           font-family: inherit;
-          box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 35%, transparent);
-          transition: all 0.18s ease;
+          box-shadow: var(--shadow-cta);
+          transition: all 0.18s var(--ease-out);
         }
         .dash-floating-cta:disabled { opacity: 0.6; cursor: not-allowed; }
         .dash-floating-cta:not(:disabled):hover {
           transform: translateY(-2px);
-          box-shadow: 0 6px 20px color-mix(in srgb, var(--color-primary) 45%, transparent);
+          box-shadow: 0 6px 20px rgba(161, 206, 63, 0.50);
         }
         /* Center the inline-flex button */
         .dash-inner > .dash-floating-cta {
@@ -472,7 +492,7 @@ export default function DashboardClient({ userId, isAdmin }: { userId: number; i
         @media (prefers-reduced-motion: reduce) {
           .dash-burst { animation: none; }
         }
-      `}</style>
+      `}</ClientStyle>
     </div>
   );
 }
@@ -517,7 +537,7 @@ function QuickMoodLogger({ onSaved }: { onSaved: (e: TodayJournal) => void }) {
               className={`logger-btn ${isPicked ? 'logger-btn-picked' : ''}`}
               style={isPicked ? { background: `${m.color}30`, borderColor: m.color } : undefined}
             >
-              <span style={{ fontSize: 16 }}>{m.emoji}</span>
+              <img src={emojiImgSrc(m.emoji)} alt={m.label} width={16} height={16} style={{ display: 'block' }} />
             </button>
           );
         })}
@@ -526,7 +546,7 @@ function QuickMoodLogger({ onSaved }: { onSaved: (e: TodayJournal) => void }) {
         Tap an emoji — that&apos;s it.
       </p>
 
-      <style>{`
+      <ClientStyle>{`
         .snap-logger { gap: 4px; }
         .snap-logger-prompt {
           font-size: 14px;
@@ -559,7 +579,7 @@ function QuickMoodLogger({ onSaved }: { onSaved: (e: TodayJournal) => void }) {
         @media (max-width: 540px) {
           .logger-row { grid-template-columns: repeat(5, 1fr); }
         }
-      `}</style>
+      `}</ClientStyle>
     </div>
   );
 }
@@ -575,7 +595,7 @@ function SnapshotSkeleton({ tall }: { tall?: boolean }) {
         minHeight: tall ? 168 : 132,
       }}
     >
-      <style>{`@keyframes shimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.85; } }`}</style>
+      <ClientStyle>{`@keyframes shimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.85; } }`}</ClientStyle>
     </div>
   );
 }

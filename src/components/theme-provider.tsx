@@ -18,9 +18,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem('harmony-theme') as Theme | null;
-    if (saved === 'light' || saved === 'dark') {
-      setTheme(saved);
-      document.documentElement.setAttribute('data-theme', saved);
+    if (saved === 'light') {
+      setTheme('light');
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      // Ensure no stale data-theme="light" is left from a previous session
+      document.documentElement.removeAttribute('data-theme');
     }
   }, []);
 
@@ -28,7 +31,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
     localStorage.setItem('harmony-theme', next);
-    document.documentElement.setAttribute('data-theme', next);
+    if (next === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      // Dark mode = `:root` defaults — no attribute needed
+      document.documentElement.removeAttribute('data-theme');
+    }
   }
 
   return (

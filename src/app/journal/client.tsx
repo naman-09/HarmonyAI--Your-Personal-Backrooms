@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Flame, TrendingUp, BookText } from 'lucide-react';
 import { Sidebar } from '@/components/sidebar';
+import { ClientStyle } from '@/components/client-style';
 
 interface JournalEntry {
   id:   number;
@@ -30,6 +31,16 @@ const MOOD_LEVELS: MoodLevel[] = [
   { emoji: '🥳', label: 'Wonderful', color: '#d4c042' },
   { emoji: '✨', label: 'Glowing',   color: '#bcc73a' },
 ];
+
+// ── Apple emoji CDN — cross-platform consistency ─────────────
+function emojiImgSrc(emoji: string): string {
+  const cp = [...emoji]
+    .map(c => c.codePointAt(0)!)
+    .filter(n => n !== 0xFE0F)             // strip variation selector-16
+    .map(n => n.toString(16))
+    .join('-');
+  return `https://cdn.jsdelivr.net/npm/emoji-datasource-apple@15.1.2/img/apple/64/${cp}.png`;
+}
 
 function dateToStr(d: Date): string {
   // Always use local-day calendar boundaries, not UTC's
@@ -186,9 +197,9 @@ export default function JournalClient() {
 
       {/* ── Stat strip ──────────────────────────────────────── */}
       <div className="stat-strip">
-        <StatPill icon={<Flame size={15} />} label="Day streak" value={streak} accent={streak > 0} />
-        <StatPill icon={<TrendingUp size={15} />} label="7-day avg" value={avg7 ?? '—'} />
-        <StatPill icon={<BookText size={15} />} label="Entries" value={entries.length} />
+        <StatPill icon={<Flame size={14} />} label="Day streak" value={streak} accent={streak > 0} />
+        <StatPill icon={<TrendingUp size={14} />} label="7-day avg" value={avg7 ?? '—'} />
+        <StatPill icon={<BookText size={14} />} label="Entries" value={entries.length} />
       </div>
 
       {/* ── Date pager ─────────────────────────────────────── */}
@@ -200,8 +211,9 @@ export default function JournalClient() {
         >
           <ChevronLeft size={16} />
         </button>
-        <div className="date-pager-label">
-          <span className="date-pager-title">{prettyDate(activeDate)}</span>
+        <div className="date-pager-text">
+          <p className="date-pager-pretty">{prettyDate(activeDate)}</p>
+          <p className="date-pager-iso">{activeDate}</p>
           {!isToday && (
             <button onClick={() => setActiveDate(todayStr)} className="date-pager-jump">
               Jump to today
@@ -220,7 +232,7 @@ export default function JournalClient() {
 
       {/* ── Mood entry card ────────────────────────────────── */}
       <section
-        className="entry-card"
+        className="journal-card"
         style={{
           // Gentle tint matching the chosen mood
           borderColor: moodLevel
@@ -228,7 +240,7 @@ export default function JournalClient() {
             : 'var(--color-border)',
         }}
       >
-        <p className="entry-prompt">
+        <p className="journal-prompt">
           {isToday
             ? activeEntry ? 'How are you feeling now?' : 'How are you feeling today?'
             : activeEntry ? `How did you feel on ${prettyDate(activeDate)}?` : `Add an entry for ${prettyDate(activeDate)}`}
@@ -237,13 +249,18 @@ export default function JournalClient() {
         {/* Big preview of selection */}
         {moodLevel && (
           <div className="mood-preview" style={{ color: moodLevel.color }}>
-            <span className="mood-preview-emoji">{moodLevel.emoji}</span>
+            <img
+              src={emojiImgSrc(moodLevel.emoji)}
+              alt={moodLevel.label}
+              width={44} height={44}
+              className="mood-preview-emoji"
+            />
             <span className="mood-preview-label">{moodLevel.label}</span>
           </div>
         )}
 
-        {/* Emoji grid — replaces the slider */}
-        <div className="mood-grid" role="radiogroup" aria-label="Mood">
+        {/* Emoji grid — 5-column, emoji + label */}
+        <div className="journal-mood-grid" role="radiogroup" aria-label="Mood">
           {MOOD_LEVELS.map((m, i) => {
             const value    = i + 1;
             const selected = mood === value;
@@ -252,18 +269,19 @@ export default function JournalClient() {
                 key={value}
                 role="radio"
                 aria-checked={selected}
-                aria-label={m.label}
+                aria-label={`${value} – ${m.label}`}
                 title={`${value} – ${m.label}`}
                 onClick={() => setMood(value)}
-                className={`mood-btn ${selected ? 'mood-btn-on' : ''}`}
+                className={`journal-mood-btn ${selected ? 'journal-mood-btn-picked' : ''}`}
                 style={selected ? {
+                  background: `${m.color}28`,
                   borderColor: m.color,
-                  background: `color-mix(in srgb, ${m.color} 18%, transparent)`,
-                  boxShadow: `0 0 0 2px color-mix(in srgb, ${m.color} 25%, transparent)`,
                 } : undefined}
               >
-                <span className="mood-btn-emoji">{m.emoji}</span>
-                <span className="mood-btn-num">{value}</span>
+                <img src={emojiImgSrc(m.emoji)} alt={m.label} width={22} height={22} style={{ display: 'block' }} />
+                <span style={{ fontSize: 10.5, color: selected ? m.color : 'var(--color-muted)', fontWeight: selected ? 600 : 400 }}>
+                  {m.label}
+                </span>
               </button>
             );
           })}
@@ -277,9 +295,9 @@ export default function JournalClient() {
           id="journal-note"
           value={note}
           onChange={(e) => setNote(e.target.value.slice(0, 2000))}
-          placeholder="A win. A worry. A thought you keep coming back to…"
-          rows={4}
-          className="note-input"
+          placeholder="A few words (optional) — what was happening today?"
+          rows={3}
+          className="journal-note"
         />
         <div className="note-footer">
           <span className={`note-count ${note.length > 1800 ? 'note-count-warn' : ''}`}>
@@ -288,50 +306,40 @@ export default function JournalClient() {
           <button
             onClick={handleSave}
             disabled={saving || !mood}
-            className="save-btn"
-            style={mood ? { background: moodLevel?.color ?? 'var(--color-primary)' } : undefined}
+            className="journal-save"
           >
             {saving ? 'Saving…' : activeEntry ? 'Update entry' : 'Save entry'}
           </button>
         </div>
       </section>
 
-      {/* ── 7-day trend chart ──────────────────────────────── */}
-      <section className="trend-card">
+      {/* ── 7-day bar chart ────────────────────────────────── */}
+      <section className="chart-card">
         <div className="trend-head">
-          <p className="section-eyebrow">Last 7 days</p>
+          <p className="section-eyebrow" style={{ marginBottom: 10 }}>Last 7 days</p>
           {avg7 !== null && (
             <span className="trend-avg">avg {avg7}/10</span>
           )}
         </div>
-        <div className="trend-bars" aria-hidden>
+        <div className="chart-row" aria-hidden>
           {chart7.map((d, i) => {
-            const heightPct = d.mood ? d.mood * 10 : 6;
-            const m = d.mood ? MOOD_LEVELS[d.mood - 1] : null;
-            const isToday = d.date === todayStr;
+            const lvl = d.mood ? MOOD_LEVELS[d.mood - 1] : null;
+            const h = d.mood ? Math.round((d.mood / 10) * 80) + 4 : 4;
+            const day = new Date(d.date).toLocaleDateString('en-IN', { weekday: 'short' });
             const isActive = d.date === activeDate;
             return (
               <button
                 key={i}
                 onClick={() => setActiveDate(d.date)}
-                className={`trend-day ${isActive ? 'trend-day-active' : ''}`}
-                title={`${prettyDate(d.date)}${d.mood ? ` — ${MOOD_LEVELS[d.mood - 1].label}` : ' — no entry'}`}
+                className={`chart-bar-wrap ${isActive ? 'chart-bar-active' : ''}`}
+                title={`${prettyDate(d.date)}${d.mood ? ` — ${lvl!.label} (${d.mood}/10)` : ' — no entry'}`}
               >
-                <span className="trend-day-emoji">
-                  {m ? m.emoji : '○'}
-                </span>
-                <div className="trend-bar-track">
-                  <div
-                    className="trend-bar-fill"
-                    style={{
-                      height: `${heightPct}%`,
-                      background: m?.color ?? 'var(--color-border-2)',
-                      opacity: m ? 1 : 0.3,
-                    }}
-                  />
-                </div>
-                <span className={`trend-day-label ${isToday ? 'trend-day-label-today' : ''}`}>
-                  {isToday ? 'Today' : new Date(d.date).toLocaleDateString('en-IN', { weekday: 'short' })}
+                <div
+                  className="chart-bar"
+                  style={{ height: `${h}px`, background: lvl?.color ?? 'rgba(255,255,255,0.06)' }}
+                />
+                <span className="chart-bar-day">
+                  {d.date === todayStr ? 'T' : day[0]}
                 </span>
               </button>
             );
@@ -374,7 +382,7 @@ export default function JournalClient() {
                     }}
                   >
                     <span className="entry-emoji" style={{ background: `${level.color}1f` }}>
-                      {level.emoji}
+                      <img src={emojiImgSrc(level.emoji)} alt={level.label} width={20} height={20} />
                     </span>
                     <div className="entry-text">
                       <div className="entry-meta">
@@ -414,7 +422,7 @@ export default function JournalClient() {
       </section>
 
       {/* ── Styles ─────────────────────────────────────────── */}
-      <style>{`
+      <ClientStyle>{`
         .journal-main {
           flex: 1;
           min-width: 0;
@@ -428,8 +436,9 @@ export default function JournalClient() {
           gap: 1rem; margin-bottom: 1.5rem;
         }
         .page-header h1 {
-          font-size: 26px; font-weight: 500; margin: 0 0 4px;
-          font-family: Georgia, 'Fraunces', serif;
+          font-size: clamp(1.6rem, 3.2vw, 2.1rem); font-weight: 400; margin: 0 0 4px;
+          font-family: var(--font-serif);
+          letter-spacing: -0.01em; line-height: 1.1;
         }
         .page-header p { font-size: 14px; color: var(--color-muted); margin: 0; }
         .back-link {
@@ -449,7 +458,7 @@ export default function JournalClient() {
         /* ── Stat strip ── */
         .stat-strip {
           display: grid; grid-template-columns: repeat(3, 1fr);
-          gap: 8px; margin-bottom: 1.25rem;
+          gap: 10px; margin: 24px 0;
         }
         .stat-pill {
           display: flex; align-items: center; gap: 10px;
@@ -460,64 +469,56 @@ export default function JournalClient() {
         }
         .stat-pill-accent {
           background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
-          border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-border));
+          border-color: color-mix(in srgb, var(--color-primary) 25%, var(--color-border));
         }
-        .stat-icon-wrap {
+        .stat-pill-icon {
+          width: 28px; height: 28px; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
-          color: var(--color-muted);
+          background: var(--color-bg);
+          border-radius: 50%;
+          color: var(--color-primary);
         }
-        .stat-pill-accent .stat-icon-wrap { color: var(--color-primary); }
-        .stat-pill-num { font-size: 18px; font-weight: 600; line-height: 1; }
-        .stat-pill-lbl { font-size: 11px; color: var(--color-muted); margin-top: 2px; }
+        .stat-pill-label { font-size: 11px; color: var(--color-muted); margin: 0; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; }
+        .stat-pill-value { font-size: 18px; font-weight: 600; margin: 0; font-variant-numeric: tabular-nums; }
 
         /* ── Date pager ── */
         .date-pager {
-          display: flex; align-items: center; gap: 6px;
-          margin-bottom: 1rem;
+          display: flex; align-items: center; justify-content: space-between;
+          background: var(--color-surface); border: 1px solid var(--color-border);
+          border-radius: var(--radius-md);
+          padding: 8px 12px; margin-bottom: 14px;
         }
         .date-pager-btn {
-          width: 32px; height: 32px;
+          width: 30px; height: 30px;
           display: flex; align-items: center; justify-content: center;
-          background: var(--color-surface);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-sm);
-          color: var(--color-muted);
-          cursor: pointer;
+          background: none; border: 1px solid transparent;
+          border-radius: var(--radius-sm); color: var(--color-muted); cursor: pointer;
           transition: all 0.15s;
         }
-        .date-pager-btn:hover:not(:disabled) {
-          color: var(--color-text);
-          border-color: var(--color-border-2);
-        }
-        .date-pager-btn:disabled {
-          opacity: 0.35; cursor: not-allowed;
-        }
-        .date-pager-label {
-          flex: 1; text-align: center;
-          display: flex; flex-direction: column; align-items: center; gap: 2px;
-        }
-        .date-pager-title { font-size: 14px; font-weight: 600; }
+        .date-pager-btn:hover:not(:disabled) { background: var(--color-bg); color: var(--color-primary); border-color: var(--color-border); }
+        .date-pager-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .date-pager-text { text-align: center; }
+        .date-pager-pretty { font-family: var(--font-serif); font-size: 18px; font-weight: 500; margin: 0; line-height: 1.1; letter-spacing: -0.005em; }
+        .date-pager-iso { font-size: 11px; color: var(--color-subtle); margin: 2px 0 0; font-family: var(--font-mono, monospace); }
         .date-pager-jump {
           font-size: 11px; color: var(--color-primary);
           background: none; border: none; cursor: pointer;
-          padding: 0; text-decoration: underline;
+          padding: 0; text-decoration: underline; display: block; margin-top: 2px;
         }
 
-        /* ── Entry card ── */
-        .entry-card {
+        /* ── Journal card ── */
+        .journal-card {
           background: var(--color-surface);
           border: 1px solid var(--color-border);
           border-radius: var(--radius-lg);
-          padding: 1.25rem;
-          margin-bottom: 1.5rem;
+          padding: 20px 22px;
+          margin-bottom: 14px;
           transition: border-color 0.3s ease;
         }
-        .entry-prompt {
-          font-size: 15px;
+        .journal-prompt {
+          font-size: 16px;
           font-weight: 500;
-          margin: 0 0 0.5rem;
-          text-align: center;
-          font-family: Georgia, 'Fraunces', serif;
+          margin: 0 0 14px;
         }
         .mood-preview {
           text-align: center;
@@ -526,8 +527,8 @@ export default function JournalClient() {
         }
         .mood-preview-emoji {
           display: block;
-          font-size: 44px;
-          line-height: 1.1;
+          width: 44px; height: 44px;
+          margin: 0 auto;
           animation: moodPop 0.25s ease-out;
         }
         .mood-preview-label {
@@ -542,33 +543,24 @@ export default function JournalClient() {
           to   { transform: scale(1);   opacity: 1; }
         }
 
-        .mood-grid {
+        .journal-mood-grid {
           display: grid;
-          grid-template-columns: repeat(10, 1fr);
-          gap: 5px;
-          margin: 0 auto 1.25rem;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 6px;
+          margin-bottom: 14px;
         }
-        .mood-btn {
-          display: flex; flex-direction: column; align-items: center; gap: 2px;
-          padding: 7px 0 5px;
+        .journal-mood-btn {
+          display: flex; flex-direction: column; align-items: center; gap: 4px;
+          padding: 10px 4px;
           background: var(--color-bg);
           border: 1.5px solid var(--color-border);
-          border-radius: var(--radius-md);
+          border-radius: var(--radius-sm);
           cursor: pointer;
-          transition: all 0.15s ease;
           font-family: inherit;
-          color: var(--color-text);
+          transition: all 0.12s;
         }
-        .mood-btn:hover {
-          transform: translateY(-1px);
-          border-color: var(--color-border-2);
-        }
-        .mood-btn-on {
-          transform: translateY(-2px);
-        }
-        .mood-btn-emoji { font-size: 18px; line-height: 1; }
-        .mood-btn-num   { font-size: 9px; color: var(--color-subtle); font-weight: 600; }
-        .mood-btn-on .mood-btn-num { color: var(--color-text); }
+        .journal-mood-btn:hover { border-color: var(--color-border-2); transform: translateY(-1px); }
+        .journal-mood-btn-picked { transform: scale(1.04); }
 
         .note-label {
           display: block;
@@ -578,54 +570,50 @@ export default function JournalClient() {
           margin-bottom: 6px;
         }
         .note-optional { color: var(--color-subtle); font-weight: 400; }
-        .note-input {
+        .journal-note {
           width: 100%;
           resize: vertical;
+          min-height: 70px;
           padding: 10px 14px;
           background: var(--color-bg);
           border: 1px solid var(--color-border-2);
           border-radius: var(--radius-md);
           color: var(--color-text);
-          font-size: 14px;
-          line-height: 1.6;
+          font-size: 13.5px;
+          line-height: 1.55;
           outline: none;
           font-family: inherit;
-          min-height: 80px;
-          transition: border-color 0.15s;
+          margin-bottom: 14px;
         }
-        .note-input:focus { border-color: var(--color-primary); }
+        .journal-note:focus { border-color: var(--color-primary); }
         .note-footer {
           display: flex; align-items: center; justify-content: space-between;
-          margin-top: 12px;
         }
         .note-count {
           font-size: 11px; color: var(--color-subtle);
         }
         .note-count-warn { color: var(--color-warning); }
-        .save-btn {
-          padding: 10px 22px;
+        .journal-save {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 9px 18px;
           background: var(--color-primary);
+          color: #011a10;
           border: none;
-          border-radius: var(--radius-md);
-          color: #fff;
-          font-size: 14px; font-weight: 500;
+          border-radius: 999px;
+          font-size: 13.5px; font-weight: 600;
           cursor: pointer;
-          transition: all 0.15s ease;
+          font-family: inherit;
+          box-shadow: var(--shadow-cta);
         }
-        .save-btn:disabled {
-          opacity: 0.4; cursor: not-allowed;
-        }
-        .save-btn:not(:disabled):hover {
-          transform: translateY(-1px);
-          filter: brightness(1.05);
-        }
+        .journal-save:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+        .journal-save:not(:disabled):hover { transform: translateY(-1px); }
 
-        /* ── Trend chart ── */
-        .trend-card {
+        /* ── 7-day bar chart ── */
+        .chart-card {
           background: var(--color-surface);
           border: 1px solid var(--color-border);
           border-radius: var(--radius-lg);
-          padding: 1rem 1.25rem 1.25rem;
+          padding: 18px 22px;
           margin-bottom: 1.5rem;
         }
         .trend-head {
@@ -634,55 +622,29 @@ export default function JournalClient() {
         .trend-avg {
           font-size: 11px; color: var(--color-muted); font-weight: 500;
         }
-        .trend-bars {
+        .chart-row {
           display: grid;
           grid-template-columns: repeat(7, 1fr);
-          gap: 6px;
-          margin-top: 0.5rem;
+          gap: 8px;
+          align-items: end;
+          height: 110px;
         }
-        .trend-day {
-          display: flex; flex-direction: column; align-items: center; gap: 4px;
-          padding: 6px 2px 4px;
-          background: none;
-          border: 1px solid transparent;
+        .chart-bar-wrap {
+          display: flex; flex-direction: column; align-items: center; gap: 6px;
+          background: none; border: none; cursor: pointer; font-family: inherit;
           border-radius: var(--radius-sm);
-          cursor: pointer;
-          transition: all 0.15s;
-          font-family: inherit;
+          padding: 2px;
+          transition: opacity 0.15s;
         }
-        .trend-day:hover {
-          background: var(--color-bg);
-        }
-        .trend-day-active {
-          background: var(--color-bg);
-          border-color: var(--color-border);
-        }
-        .trend-day-emoji {
-          font-size: 14px; height: 18px; line-height: 1;
-          color: var(--color-subtle);
-        }
-        .trend-bar-track {
-          width: 100%; max-width: 28px;
-          height: 70px;
-          background: var(--color-bg);
+        .chart-bar-wrap:hover { opacity: 0.8; }
+        .chart-bar-active { outline: 1px solid var(--color-border); }
+        .chart-bar {
+          width: 70%;
           border-radius: 4px;
-          display: flex;
-          align-items: flex-end;
-          overflow: hidden;
+          transition: height 0.4s var(--ease-out, cubic-bezier(0.4,0,0.2,1));
         }
-        .trend-bar-fill {
-          width: 100%;
-          border-radius: 4px;
-          transition: height 0.3s ease, background 0.2s;
-        }
-        .trend-day-label {
-          font-size: 10px;
-          color: var(--color-subtle);
-          font-weight: 500;
-        }
-        .trend-day-label-today {
-          color: var(--color-primary);
-          font-weight: 600;
+        .chart-bar-day {
+          font-size: 11px; color: var(--color-muted); font-weight: 500;
         }
 
         /* ── Entries list ── */
@@ -788,11 +750,11 @@ export default function JournalClient() {
 
         @media (max-width: 540px) {
           .journal-main { padding: 1.25rem 1rem 2rem; }
-          .mood-grid { grid-template-columns: repeat(5, 1fr); }
+          .journal-mood-grid { grid-template-columns: repeat(5, 1fr); }
           .stat-strip { grid-template-columns: repeat(3, 1fr); gap: 6px; }
           .stat-pill { padding: 10px 12px; }
         }
-      `}</style>
+      `}</ClientStyle>
       </main>
     </div>
   );
@@ -803,10 +765,10 @@ function StatPill({ icon, label, value, accent }: {
 }) {
   return (
     <div className={`stat-pill ${accent ? 'stat-pill-accent' : ''}`}>
-      <span className="stat-icon-wrap">{icon}</span>
+      <span className="stat-pill-icon">{icon}</span>
       <div>
-        <div className="stat-pill-num">{value}</div>
-        <div className="stat-pill-lbl">{label}</div>
+        <p className="stat-pill-label">{label}</p>
+        <p className="stat-pill-value">{value}</p>
       </div>
     </div>
   );

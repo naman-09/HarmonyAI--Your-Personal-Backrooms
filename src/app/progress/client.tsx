@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Award, Flame, MessageCircle, BookOpen, Download, Sparkles, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Sidebar } from '@/components/sidebar';
+import { ClientStyle } from '@/components/client-style';
 
 interface Stats {
   totalSessions:    number;
@@ -297,7 +298,7 @@ export default function ProgressClient() {
       )}
 
       {/* ── Styles ─────────────────────────────────────────── */}
-      <style>{`
+      <ClientStyle>{`
         .progress-main {
           flex: 1;
           min-width: 0;
@@ -311,7 +312,7 @@ export default function ProgressClient() {
         }
         .page-header h1 {
           font-size: 26px; font-weight: 500; margin: 0 0 4px;
-          font-family: Georgia, 'Fraunces', serif;
+          font-family: var(--font-serif);
         }
         .page-header p { font-size: 14px; color: var(--color-muted); margin: 0; }
         .back-link {
@@ -349,7 +350,7 @@ export default function ProgressClient() {
         .hero-headline {
           font-size: 19px; font-weight: 600;
           margin: 0 0 4px;
-          font-family: Georgia, 'Fraunces', serif;
+          font-family: var(--font-serif);
           line-height: 1.3;
         }
         .hero-subline {
@@ -643,7 +644,7 @@ export default function ProgressClient() {
           min-height: 100vh;
           background: var(--color-bg);
         }
-      `}</style>
+      `}</ClientStyle>
       </main>
     </div>
   );
@@ -692,7 +693,7 @@ function ProgressSkeleton() {
       </div>
       <div className="skel skel-med" />
       <div className="skel skel-tall" />
-      <style>{`
+      <ClientStyle>{`
         .skel {
           background: var(--color-surface);
           border: 1px solid var(--color-border);
@@ -703,7 +704,7 @@ function ProgressSkeleton() {
         .skel-med   { height: 110px; }
         .skel-short { height: 80px;  }
         @keyframes shimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.85; } }
-      `}</style>
+      `}</ClientStyle>
     </div>
   );
 }

@@ -149,7 +149,7 @@ export default function SettingsClient({ initial }: { initial: SettingsData }) {
 
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: 26, fontWeight: 500, marginBottom: 4, fontFamily: "Georgia, 'Fraunces', serif" }}>Settings</h1>
+        <h1 style={{ fontSize: 26, fontWeight: 500, marginBottom: 4, fontFamily: "var(--font-serif)" }}>Settings</h1>
         <p style={{ fontSize: 14, color: 'var(--color-muted)' }}>Crisis alerts, appearance & preferences</p>
       </div>
 

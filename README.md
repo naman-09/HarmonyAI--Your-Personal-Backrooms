@@ -57,6 +57,23 @@ npm run dev
 # → http://localhost:3000
 ```
 
+### Optional FastAPI sidecar
+
+Harmony can use a Python FastAPI sidecar for emotion scoring and safety helper endpoints. The Next.js app falls back to its built-in TypeScript scorer if this service is not running.
+
+```bash
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+npm run fastapi
+# -> http://127.0.0.1:8000/docs
+```
+
+In `.env.local`, set:
+
+```bash
+FASTAPI_BASE_URL=http://127.0.0.1:8000
+```
+
 ---
 
 ## Deploy to Vercel

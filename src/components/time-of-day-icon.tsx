@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { TimeOfDay } from '@/hooks/use-user-context';
+import { ClientStyle } from '@/components/client-style';
 
 // ─── 3 icon styles the user can pick from ────────────────────
 export type IconStyle = 'custom' | 'animated' | 'twemoji';
@@ -133,13 +134,13 @@ function CustomIcon({ tod, size, animated, className }: {
       <circle cx="32" cy="32" r="30" fill="none" stroke="rgba(0,0,0,0.06)" />
 
       {animated && (
-        <style>{`
+        <ClientStyle>{`
           @keyframes todSpin   { to { transform: rotate(360deg); } }
           @keyframes todPulse  { 0%,100% { opacity: 0.85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
           @keyframes todTwinkle{ 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
           @keyframes todDrift  { from { transform: translateX(-2px); } to { transform: translateX(2px); } }
           @keyframes todRise   { 0% { transform: translateY(2px); } 100% { transform: translateY(0); } }
-        `}</style>
+        `}</ClientStyle>
       )}
     </svg>
   );

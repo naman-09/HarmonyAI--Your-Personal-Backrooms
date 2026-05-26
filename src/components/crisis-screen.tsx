@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { HARMONY_PALETTE } from '@/lib/theme/colors';
+import { ClientStyle } from '@/components/client-style';
 
 interface CrisisScreenProps {
   level:            3 | 4;
@@ -185,12 +186,12 @@ export default function CrisisScreen({ level, trustedName = 'Your trusted contac
       </button>
 
       {/* Pulse animation */}
-      <style>{`
+      <ClientStyle>{`
         @keyframes harmonyPulse {
           0%, 100% { transform: scale(1);    opacity: 1;    }
           50%       { transform: scale(1.12); opacity: 0.85; }
         }
-      `}</style>
+      `}</ClientStyle>
     </div>
   );
 }

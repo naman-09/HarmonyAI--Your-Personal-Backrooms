@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db, sessions, messages } from '@/lib/db';
 import { streamHarmonyResponse, generateChatTitle } from '@/lib/ai';
-import { scoreEmotion } from '@/lib/emotion';
+import { scoreEmotionWithFastAPI } from '@/lib/fastapi';
 import { chatRateLimit } from '@/lib/redis';
 import { triggerLevelAlert, getUserAlertSettings } from '@/lib/crisis-alert';
 import { eq } from 'drizzle-orm';
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const emotionScore = scoreEmotion(emotionSignals);
+  const emotionScore = await scoreEmotionWithFastAPI(emotionSignals);
 
   await db.insert(messages).values({
     sessionId:    session.id,

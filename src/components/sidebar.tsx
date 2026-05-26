@@ -8,6 +8,7 @@ import {
   Pencil, Check, X, Home, TrendingUp, BookOpen, Sparkles, Settings as SettingsIcon,
   Shield, LogOut, Sun, Moon, RotateCw, MapPinOff,
 } from 'lucide-react';
+import { ClientStyle } from '@/components/client-style';
 import { useTheme } from '@/components/theme-provider';
 import { TimeOfDayIcon } from '@/components/time-of-day-icon';
 import { useUserContext, describeTimeOfDay } from '@/hooks/use-user-context';
@@ -356,7 +357,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
       </div>
 
       {/* ── Styles ─────────────────────────────────────────── */}
-      <style>{`
+      <ClientStyle>{`
         .sidebar {
           width: 260px;
           flex-shrink: 0;
@@ -393,7 +394,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
           font-size: 16px;
           font-weight: 500;
           letter-spacing: -0.01em;
-          font-family: Georgia, 'Fraunces', serif;
+          font-family: var(--font-serif);
         }
         .collapse-toggle {
           width: 28px; height: 28px;
@@ -501,7 +502,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
           display: flex; align-items: center; gap: 10px;
           padding: 10px 12px;
           margin: 0 8px;
-          background: var(--weather-tint-strong, var(--color-bg));
+          background: var(--weather-tint-strong, var(--color-surface-2));
           border: 1px solid var(--color-border);
           border-radius: var(--radius-md);
           transition: background 1.2s ease;
@@ -609,7 +610,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
             transform: translateX(0);
           }
         }
-      `}</style>
+      `}</ClientStyle>
     </aside>
   );
 }
@@ -688,7 +689,7 @@ function ChatRow({
         </>
       )}
 
-      <style>{`
+      <ClientStyle>{`
         .chat-row {
           position: relative;
           display: flex; align-items: stretch;
@@ -804,7 +805,7 @@ function ChatRow({
           from { opacity: 0; transform: translateY(-2px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-      `}</style>
+      `}</ClientStyle>
     </div>
   );
 }

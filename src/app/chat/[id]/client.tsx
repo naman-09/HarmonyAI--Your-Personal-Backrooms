@@ -17,11 +17,22 @@ import { describeSeason } from '@/lib/theme/engine';
 import { scoreEmotion, type EmotionScore, type EmotionSignals } from '@/lib/emotion';
 import EMOTION_LEXICON from '@/lib/emotion-lexicon.json';
 import { ArrowLeft } from 'lucide-react';
+import { ClientStyle } from '@/components/client-style';
 
 interface Message {
   role:    'user' | 'assistant' | 'crisis' | 'alert';
   content: string;
   ts?:     number;
+}
+
+// ── Apple emoji CDN — cross-platform consistency ─────────────
+function emojiImgSrc(emoji: string): string {
+  const cp = [...emoji]
+    .map(c => c.codePointAt(0)!)
+    .filter(n => n !== 0xFE0F)
+    .map(n => n.toString(16))
+    .join('-');
+  return `https://cdn.jsdelivr.net/npm/emoji-datasource-apple@15.1.2/img/apple/64/${cp}.png`;
 }
 
 const DEFAULT_SIGNALS: EmotionSignals = {
@@ -154,19 +165,19 @@ function HarmonyWave({ active }: { active: boolean }) {
           <div key={i} style={{
             width: 4, borderRadius: 2,
             height: active ? `${h * 36}px` : '4px',
-            background: 'rgba(200,145,90,0.85)',
+            background: 'var(--color-primary)',
             opacity: active ? 0.7 + h * 0.3 : 0.2,
             transition: 'height 0.3s ease, opacity 0.3s',
             animation: active ? `harmonyBar 1.3s ease-in-out ${i * 0.12}s infinite alternate` : 'none',
           }} />
         ))}
       </div>
-      <style>{`
+      <ClientStyle>{`
         @keyframes harmonyBar {
           from { transform: scaleY(0.25); }
           to   { transform: scaleY(1);    }
         }
-      `}</style>
+      `}</ClientStyle>
     </>
   );
 }
@@ -569,7 +580,10 @@ export default function ChatClient({
         {/* ════════════════ LEFT PANEL — Voice ════════════════ */}
         <aside className="side-panel side-panel-left">
           <div className="panel-section">
-            <p className="panel-label">🎤 Your voice</p>
+            <p className="panel-label">
+              <img src={emojiImgSrc('🎤')} alt="" aria-hidden width={12} height={12} style={{ verticalAlign: 'middle' }} />
+              {' '}Your voice
+            </p>
             <VoiceBars volume={micVolume} active={micOn} />
             <p className="panel-hint">
               {micOn ? 'Listening…' : 'Enable mic to visualise'}
@@ -578,7 +592,10 @@ export default function ChatClient({
 
           <div className="panel-section" style={{ marginTop: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <p className="panel-label" style={{ margin: 0 }}>🤖 Harmony</p>
+              <p className="panel-label" style={{ margin: 0 }}>
+                <img src={emojiImgSrc('🤖')} alt="" aria-hidden width={12} height={12} style={{ verticalAlign: 'middle' }} />
+                {' '}Harmony
+              </p>
               {/* TTS toggle */}
               <button
                 onClick={() => {
@@ -665,7 +682,7 @@ export default function ChatClient({
                       className="starter-chip"
                       onClick={() => { setInput(s.prompt); inputRef.current?.focus(); }}
                     >
-                      <span className="starter-chip-icon">{s.icon}</span>
+                      <img src={emojiImgSrc(s.icon)} alt="" aria-hidden width={14} height={14} className="starter-chip-icon" />
                       <span>{s.label}</span>
                     </button>
                   ))}
@@ -743,7 +760,10 @@ export default function ChatClient({
         {/* ════════════════ RIGHT PANEL — Camera ════════════════ */}
         <aside className="side-panel side-panel-right">
           <div className="panel-section">
-            <p className="panel-label">📷 Face analysis</p>
+            <p className="panel-label">
+              <img src={emojiImgSrc('📷')} alt="" aria-hidden width={12} height={12} style={{ verticalAlign: 'middle' }} />
+              {' '}Face analysis
+            </p>
             <div className="camera-feed-box">
               {/* Always in DOM so ref is valid; toggled visible by CSS */}
               <video
@@ -776,7 +796,7 @@ export default function ChatClient({
       <SOSButton />
 
       {/* ── Styles ───────────────────────────────────────────────── */}
-      <style>{`
+      <ClientStyle>{`
         /* ── Three-column page layout ── */
         .page-wrapper {
           display: flex;
@@ -858,14 +878,14 @@ export default function ChatClient({
           border-radius: var(--radius-lg);
         }
 
-        /* ── Chat container ── */
+        /* ── Chat container — fills the full centre column.
+           Header and input bar run edge-to-edge.
+           Message bubbles get a max-width via .messages-area padding. */
         .chat-container {
           flex: 1;
           display: flex;
           flex-direction: column;
           min-width: 0;
-          max-width: 720px;
-          margin: 0 auto;
         }
 
         .chat-header {
@@ -887,15 +907,19 @@ export default function ChatClient({
         .end-session-btn:hover { border-color: var(--color-border-2); color: var(--color-text); }
 
         .messages-area {
-          flex: 1; overflow-y: auto; padding: 1rem;
+          flex: 1; overflow-y: auto;
+          padding: 1rem max(1rem, calc((100% - 720px) / 2));
           display: flex; flex-direction: column; gap: 12px;
           scroll-behavior: smooth;
         }
 
-        .multimodal-area { padding: 0 1rem 0.5rem; flex-shrink: 0; }
+        .multimodal-area {
+          padding: 0 max(1rem, calc((100% - 720px) / 2)) 0.5rem;
+          flex-shrink: 0;
+        }
 
         .input-area {
-          padding: 0.5rem 1rem 1rem;
+          padding: 0.5rem max(1rem, calc((100% - 720px) / 2)) 1rem;
           border-top: 1px solid var(--color-border);
           flex-shrink: 0; background: var(--color-bg);
         }
@@ -914,15 +938,18 @@ export default function ChatClient({
           width: 42px; height: 42px;
           display: flex; align-items: center; justify-content: center;
           background: var(--color-primary); border: none;
-          border-radius: var(--radius-md); color: #fff;
+          border-radius: var(--radius-md); color: #011a10;
           cursor: pointer; flex-shrink: 0; transition: all 0.15s;
         }
-        .send-btn:disabled { background: rgba(200,145,90,0.2); cursor: not-allowed; }
+        .send-btn:not(:disabled):hover {
+          background: var(--accent-hover);
+        }
+        .send-btn:disabled { background: rgba(161,206,63,0.18); cursor: not-allowed; }
 
         .send-spinner {
           width: 16px; height: 16px;
-          border: 2px solid rgba(255,255,255,0.3);
-          border-top-color: #fff; border-radius: 50%;
+          border: 2px solid rgba(1, 26, 16, 0.25);
+          border-top-color: #011a10; border-radius: 50%;
           animation: spin 0.6s linear infinite;
         }
 
@@ -951,7 +978,7 @@ export default function ChatClient({
           animation: burstSpin 22s linear infinite;
         }
         .welcome-greeting {
-          font-family: Georgia, 'Fraunces', 'Playfair Display', serif;
+          font-family: var(--font-serif);
           font-size: clamp(2rem, 5vw, 3.25rem);
           font-weight: 400;
           letter-spacing: -0.01em;
@@ -993,7 +1020,7 @@ export default function ChatClient({
           border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
           transform: translateY(-1px);
         }
-        .starter-chip-icon { font-size: 14px; }
+        .starter-chip-icon { width: 14px; height: 14px; display: block; flex-shrink: 0; }
 
         @keyframes welcomeFade {
           from { opacity: 0; transform: translateY(8px); }
@@ -1012,8 +1039,8 @@ export default function ChatClient({
         /* ── Message bubbles ── */
         .bubble-user {
           max-width: 80%; padding: 10px 14px;
-          background: rgba(200,145,90,0.15);
-          border: 1px solid rgba(200,145,90,0.25);
+          background: color-mix(in srgb, var(--color-primary) 14%, var(--color-card));
+          border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--color-border));
           border-radius: var(--radius-lg) var(--radius-lg) 4px var(--radius-lg);
           font-size: 14px; line-height: 1.7;
         }
@@ -1059,14 +1086,13 @@ export default function ChatClient({
         }
 
         @media (max-width: 640px) {
-          .chat-container { max-width: 100%; }
-          .messages-area  { padding: 0.75rem; }
-          .input-area     { padding: 0.5rem 0.75rem 0.75rem; }
+          .messages-area   { padding: 0.75rem; }
+          .input-area      { padding: 0.5rem 0.75rem 0.75rem; }
           .multimodal-area { padding: 0 0.75rem 0.5rem; }
-          .chat-header    { padding: 0.5rem 0.75rem; }
+          .chat-header     { padding: 0.5rem 0.75rem; }
           .bubble-user, .bubble-assistant { max-width: 90%; }
         }
-      `}</style>
+      `}</ClientStyle>
     </>
   );
 }

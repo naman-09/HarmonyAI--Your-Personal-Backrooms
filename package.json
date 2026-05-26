@@ -5,6 +5,7 @@
   "scripts": {
     "seed": "dotenv -e .env.local -- tsx scripts/seed.ts",
     "dev": "npm run seed && next dev",
+    "fastapi": ".venv\\Scripts\\python.exe -m uvicorn fastapi_app.main:app --host 127.0.0.1 --port 8000 --reload",
     "build": "next build",
     "start": "npm run seed && next start",
     "lint": "next lint",

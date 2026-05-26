@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { VoiceAnalyzer } from '@/lib/voice';
 import { loadFaceModels, detectEmotions } from '@/lib/face';
 import type { EmotionSignals } from '@/lib/emotion';
+import { ClientStyle } from '@/components/client-style';
 
 interface MultimodalControlsProps {
   onSignals:       (signals: Partial<EmotionSignals>) => void;
@@ -14,6 +15,16 @@ interface MultimodalControlsProps {
   onMicLevel?:     (volume: number, pitch: number) => void;
   /** Called when speech recognition produces a final transcript */
   onTranscript?:   (text: string) => void;
+}
+
+// ── Apple emoji CDN ───────────────────────────────────────────
+function emojiImgSrc(emoji: string): string {
+  const cp = [...emoji]
+    .map(c => c.codePointAt(0)!)
+    .filter(n => n !== 0xFE0F)
+    .map(n => n.toString(16))
+    .join('-');
+  return `https://cdn.jsdelivr.net/npm/emoji-datasource-apple@15.1.2/img/apple/64/${cp}.png`;
 }
 
 // Safely get the SpeechRecognition constructor (cross-browser)
@@ -211,8 +222,8 @@ export function MultimodalControls({
   const btnStyle = (active: boolean): React.CSSProperties => ({
     display: 'flex', alignItems: 'center', gap: 7,
     padding: '7px 14px',
-    background: active ? 'rgba(200,145,90,0.15)' : 'var(--color-surface)',
-    border: `1px solid ${active ? 'rgba(200,145,90,0.4)' : 'var(--color-border)'}`,
+    background: active ? 'rgba(161,206,63,0.10)' : 'var(--color-surface)',
+    border: `1px solid ${active ? 'rgba(161,206,63,0.30)' : 'var(--color-border)'}`,
     borderRadius: 'var(--radius-md)',
     color: active ? 'var(--color-primary)' : 'var(--color-muted)',
     fontSize: 13, fontWeight: 500,
@@ -226,7 +237,7 @@ export function MultimodalControls({
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         {/* Mic toggle */}
         <button style={btnStyle(micOn)} onClick={micOn ? stopMic : startMic}>
-          <span style={{ fontSize: 15 }}>{micOn ? '🎙' : '🎤'}</span>
+          <img src={emojiImgSrc(micOn ? '🎙' : '🎤')} alt={micOn ? 'Mic on' : 'Mic off'} width={15} height={15} style={{ display: 'block', flexShrink: 0 }} />
           {micOn ? 'Mic on' : 'Mic off'}
           {micOn && hasStt && sttReady && (
             <span style={{ fontSize: 10, color: 'var(--color-success)', marginLeft: 2 }}>STT</span>
@@ -242,7 +253,7 @@ export function MultimodalControls({
 
         {/* Camera toggle */}
         <button style={btnStyle(cameraOn)} onClick={cameraOn ? stopCamera : startCamera}>
-          <span style={{ fontSize: 15 }}>📷</span>
+          <img src={emojiImgSrc('📷')} alt="Camera" width={15} height={15} style={{ display: 'block', flexShrink: 0 }} />
           {cameraOn ? 'Camera on' : 'Camera off'}
           {cameraOn && (
             <span style={{
@@ -257,12 +268,12 @@ export function MultimodalControls({
       {micErr && <p style={{ fontSize: 12, color: 'var(--color-danger)', marginTop: 6 }}>{micErr}</p>}
       {camErr && <p style={{ fontSize: 12, color: 'var(--color-danger)', marginTop: 6 }}>{camErr}</p>}
 
-      <style>{`
+      <ClientStyle>{`
         @keyframes mmcPulse {
           0%, 100% { opacity: 1; }
           50%       { opacity: 0.4; }
         }
-      `}</style>
+      `}</ClientStyle>
     </div>
   );
 }

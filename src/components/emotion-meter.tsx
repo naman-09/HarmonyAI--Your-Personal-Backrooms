@@ -11,18 +11,19 @@ interface EmotionMeterProps {
 
 // Psychology-driven mapping: warm amber escalation, never bright red.
 // Bright red triggers fight-or-flight; this app's job is the opposite.
+// Colors align with --emo-* tokens in globals.css and the NEBULA palette.
 const LABEL_COLOR: Record<EmotionScore['label'], string> = {
-  calm:       HARMONY_PALETTE.accents.calm,   // #3D7068 — deep teal
-  unsettled:  HARMONY_PALETTE.accents.soft,   // #6FA89D — sage cyan
-  distressed: HARMONY_PALETTE.accents.glow,   // #FFCC88 — muted sunrise
-  intense:    '#D9A066',                      // warm orange-brown
+  calm:       '#107e57',   // viridian       — grounded, present
+  unsettled:  '#1fa86e',   // lighter viridian — gently elevated
+  distressed: '#a1ce3f',   // bioluminescent lime — notable but not alarming
+  intense:    '#e07a3f',   // warm amber      — never bright red
 };
 
 const LABEL_GLOW: Record<EmotionScore['label'], string> = {
-  calm:       'rgba(61, 112, 104, 0.30)',
-  unsettled:  'rgba(111, 168, 157, 0.30)',
-  distressed: 'rgba(255, 204, 136, 0.35)',
-  intense:    'rgba(217, 160, 102, 0.40)',
+  calm:       'rgba(16, 126, 87, 0.30)',
+  unsettled:  'rgba(31, 168, 110, 0.30)',
+  distressed: 'rgba(161, 206, 63, 0.32)',
+  intense:    'rgba(224, 122, 63, 0.38)',
 };
 
 const LABEL_TEXT: Record<EmotionScore['label'], string> = {

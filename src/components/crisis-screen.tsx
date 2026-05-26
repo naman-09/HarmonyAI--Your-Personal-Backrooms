@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { HARMONY_PALETTE } from '@/lib/theme/colors';
 
 interface CrisisScreenProps {
   level:            3 | 4;
@@ -58,24 +59,30 @@ export default function CrisisScreen({ level, trustedName = 'Your trusted contac
   }, [secondsLeft]);
 
   const callNumbers = [
-    { label: 'iCall (TISS)',    number: '9152987821',  color: '#ff6b6b' },
-    { label: 'Vandrevala 24/7', number: '18602662345', color: '#ffa94d' },
-    { label: 'Emergency 112',   number: '112',          color: '#ff6b6b' },
+    { label: 'iCall (TISS)',    number: '9152987821',  color: HARMONY_PALETTE.crisis.button },
+    { label: 'Vandrevala 24/7', number: '18602662345', color: HARMONY_PALETTE.accents.glow },
+    { label: 'Emergency 112',   number: '112',          color: HARMONY_PALETTE.crisis.button },
   ];
 
+  // CRITICAL: this screen MUST always render on top of everything,
+  // unhidden by any theme override or ThemedBackground layer.
+  // z-index 9999 + opacity/visibility !important prevents accidental hiding.
   return (
-    <div style={{
-      position:       'fixed',
-      inset:          0,
-      zIndex:         9999,
-      background:     'radial-gradient(ellipse at center, #2a0a0a 0%, #1a0505 60%, #0f0202 100%)',
-      display:        'flex',
-      flexDirection:  'column',
-      alignItems:     'center',
-      justifyContent: 'center',
-      padding:        '2rem',
-      overflowY:      'auto',
-    }}>
+    <div
+      className="crisis-screen"
+      style={{
+        position:       'fixed',
+        inset:          0,
+        zIndex:         9999,
+        background:     `linear-gradient(135deg, ${HARMONY_PALETTE.crisis.bg} 0%, ${HARMONY_PALETTE.crisis.bgEnd} 100%)`,
+        display:        'flex',
+        flexDirection:  'column',
+        alignItems:     'center',
+        justifyContent: 'center',
+        padding:        '2rem',
+        overflowY:      'auto',
+      }}
+    >
 
       {/* Pulsing heart */}
       <div style={{ marginBottom: '2rem' }}>

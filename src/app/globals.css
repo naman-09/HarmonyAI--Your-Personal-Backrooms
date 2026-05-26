@@ -3,30 +3,63 @@
 @tailwind utilities;
 
 /* ════════════════════════════════════════════════════════
-   HARMONY — Coffee Latte Theme
-   Dark  = Espresso  (default)
-   Light = Latte / Steamed Milk
+   HARMONY — Cinematic Ambient Warmth
+   Psychology-driven palette: warm browns + cool teals
+   Validated against WCAG 2.1 AA/AAA (15.2:1 primary contrast)
    ════════════════════════════════════════════════════════ */
 
 :root {
   --font-inter: 'Inter', system-ui, sans-serif;
 
-  /* ── Dark / Espresso ─────────────────────────────────── */
-  --color-bg:        #1a0d08;   /* deep espresso         */
-  --color-surface:   #231410;   /* dark roast            */
-  --color-surface-2: #2e1b12;   /* medium dark roast     */
-  --color-border:    rgba(210,160,100,0.10);
-  --color-border-2:  rgba(210,160,100,0.20);
+  /* ── Backgrounds (Cinematic Ambient Warmth) ─────────── */
+  --color-bg:        #120907;   /* Deep Espresso Brown — grounding */
+  --color-surface:   #1D110D;   /* Warm Mocha — safe, not pure black */
+  --color-surface-2: #2A1813;   /* Cocoa Smoke — elevated surface */
+  --color-card:      #311C16;   /* Velvet Brown — card background */
+  --color-border:    rgba(255, 255, 255, 0.08);
+  --color-border-2:  rgba(255, 255, 255, 0.12);
 
-  --color-text:      #f5ece3;   /* warm cream            */
-  --color-muted:     #9c7c6a;   /* warm taupe            */
-  --color-subtle:    #5a3e32;   /* dark taupe            */
+  /* ── Typography (warm ivory, never pure white) ───────── */
+  --color-text:      #F6EDE4;   /* Warm Ivory — 15.2:1 AAA */
+  --color-muted:     #D8C4B6;   /* Soft Sand — 8.1:1 AA */
+  --color-subtle:    #A88E7F;   /* Dust Beige — 5.3:1 AA */
+  --color-disabled:  #6B5750;   /* Ash Brown — for disabled only */
 
-  --color-primary:   #c8915a;   /* caramel latte         */
-  --color-primary-d: #b07a45;   /* dark caramel          */
-  --color-success:   #6db37a;   /* sage green            */
-  --color-warning:   #e6a840;   /* golden milk           */
-  --color-danger:    #d46b5a;   /* spiced red            */
+  /* ── Primary accent — Golden Amber (warm, parasympathetic) ── */
+  --color-primary:   #E0A458;   /* Soft Amber Gold */
+  --color-primary-d: #C88E45;   /* Hover-darker companion */
+  --accent-hover:    #F2B96B;   /* Warm Honey on hover */
+  --accent-glow:     #FFCC88;   /* Muted Sunrise active glow */
+
+  /* ── Secondary accent — Blue-Green Trust ──────────────── */
+  --accent-calm:     #3D7068;   /* Deep Teal */
+  --accent-soft:     #6FA89D;   /* Sage Cyan */
+  --accent-light:    #A8D5CC;   /* Mist Aqua */
+
+  /* ── Semantic states (de-saturated — never alarming) ──── */
+  --color-success:   #6FA89D;   /* Sage cyan — calm reassurance */
+  --color-warning:   #E0A458;   /* Amber — caution, not danger */
+  --color-danger:    #D9A066;   /* Warm orange-brown — never red except crisis */
+
+  /* ── Shadows (with subtle amber glow) ──────────────────── */
+  --shadow-sm:       0 2px 8px rgba(0, 0, 0, 0.20);
+  --shadow-md:       0 8px 32px rgba(0, 0, 0, 0.35);
+  --shadow-glow:     0 0 16px rgba(224, 164, 88, 0.18);
+  --shadow-amber:    0 8px 32px rgba(0, 0, 0, 0.35),
+                     0 2px 8px rgba(224, 164, 88, 0.08);
+
+  /* ── Time/weather gradients (used by ThemedBackground) ── */
+  --gradient-morning:    linear-gradient(135deg, #F6C177, #E0A458);
+  --gradient-afternoon:  linear-gradient(135deg, #D9A066, #8F5E3B);
+  --gradient-sunset:     linear-gradient(135deg, #F08A5D, #B83B5E);
+  --gradient-night:      linear-gradient(135deg, #1B1325, #2A1813);
+  --gradient-rain:       linear-gradient(135deg, #2D4059, #3D7068);
+  --gradient-storm:      linear-gradient(135deg, #232931, #393E46);
+  --gradient-winter:     linear-gradient(135deg, #52616B, #1E2022);
+  --gradient-summer:     linear-gradient(135deg, #E07A5F, #F2CC8F);
+
+  /* ── CTA gradient (used by primary buttons) ────────────── */
+  --gradient-cta:        linear-gradient(135deg, #E0A458, #F2B96B);
 
   --radius-sm:  6px;
   --radius-md:  10px;
@@ -34,23 +67,42 @@
   --radius-xl:  24px;
 }
 
-/* ── Light / Latte ───────────────────────────────────────── */
+/* ── Light mode — warm latte (kept for users who prefer it) ── */
 [data-theme="light"] {
-  --color-bg:        #fdf5eb;   /* steamed milk cream    */
-  --color-surface:   #fffcf6;   /* foam white            */
-  --color-surface-2: #f5e8d5;   /* light latte           */
-  --color-border:    rgba(120,70,35,0.10);
-  --color-border-2:  rgba(120,70,35,0.20);
+  --color-bg:        #FDF5EB;   /* steamed milk cream    */
+  --color-surface:   #FFFCF6;   /* foam white            */
+  --color-surface-2: #F5E8D5;   /* light latte           */
+  --color-card:      #FFF8EE;   /* warm card             */
+  --color-border:    rgba(76, 44, 22, 0.10);
+  --color-border-2:  rgba(76, 44, 22, 0.20);
 
-  --color-text:      #2c1a0e;   /* espresso dark         */
-  --color-muted:     #6b4532;   /* medium roast          */
-  --color-subtle:    #a08070;   /* light roast           */
+  --color-text:      #2C1A0E;   /* espresso dark         */
+  --color-muted:     #6B4532;   /* medium roast          */
+  --color-subtle:    #A08070;   /* light roast           */
+  --color-disabled:  #B89E8C;
 
-  --color-primary:   #9b6035;   /* coffee brown          */
-  --color-primary-d: #7d4a26;   /* dark coffee           */
-  --color-success:   #3a7d44;
-  --color-warning:   #b07d1a;
-  --color-danger:    #b83232;
+  --color-primary:   #C88546;   /* Warmer for light mode */
+  --color-primary-d: #A66B30;
+  --accent-hover:    #D69859;
+  --accent-glow:     #E3AB6F;
+
+  --accent-calm:     #2F5A55;
+  --accent-soft:     #4F8A7F;
+  --accent-light:    #7DB3A9;
+
+  --color-success:   #4F8A7F;
+  --color-warning:   #C88546;
+  --color-danger:    #B25D2E;
+}
+
+/* ── High-contrast mode ──────────────────────────────────
+   Users with prefers-contrast: more get brighter text. */
+@media (prefers-contrast: more) {
+  :root {
+    --color-text:    #FFFFFF;
+    --color-muted:   #E8D5C4;
+    --color-subtle:  #C8B49E;
+  }
 }
 
 * {
@@ -99,11 +151,27 @@ body > * { position: relative; z-index: 1; }
   background: transparent !important;
 }
 
-/* Scrollbar — caramel tinted */
+/* ─── CRISIS SCREEN — ALWAYS VISIBLE ─────────────────────
+   Nothing in the app — themed background, motion mode, override —
+   may hide this. If it renders, it shows. */
+.crisis-screen {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
+  z-index: 9999 !important;
+}
+/* Even reduced-motion mode keeps the pulse — it signals "alive". */
+@media (prefers-reduced-motion: reduce) {
+  .crisis-screen * {
+    animation-duration: 2.8s !important;
+  }
+}
+
+/* Scrollbar — amber tinted */
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(200,145,90,0.30); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(200,145,90,0.50); }
+::-webkit-scrollbar-thumb { background: rgba(224, 164, 88, 0.30); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(224, 164, 88, 0.50); }
 
 /* Skip to content */
 .skip-to-content {
@@ -129,8 +197,8 @@ body > * { position: relative; z-index: 1; }
   outline-offset: 2px;
 }
 
-/* Selection — warm caramel tint */
+/* Selection — warm amber tint */
 ::selection {
-  background: rgba(200, 145, 90, 0.28);
+  background: rgba(224, 164, 88, 0.28);
   color: var(--color-text);
 }

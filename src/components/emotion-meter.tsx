@@ -2,17 +2,27 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import type { EmotionScore } from '@/lib/emotion';
+import { HARMONY_PALETTE } from '@/lib/theme/colors';
 
 interface EmotionMeterProps {
   score: EmotionScore;
   size?: number;
 }
 
+// Psychology-driven mapping: warm amber escalation, never bright red.
+// Bright red triggers fight-or-flight; this app's job is the opposite.
 const LABEL_COLOR: Record<EmotionScore['label'], string> = {
-  calm:       '#34d399',
-  unsettled:  '#fbbf24',
-  distressed: '#f97316',
-  intense:    '#f87171',
+  calm:       HARMONY_PALETTE.accents.calm,   // #3D7068 — deep teal
+  unsettled:  HARMONY_PALETTE.accents.soft,   // #6FA89D — sage cyan
+  distressed: HARMONY_PALETTE.accents.glow,   // #FFCC88 — muted sunrise
+  intense:    '#D9A066',                      // warm orange-brown
+};
+
+const LABEL_GLOW: Record<EmotionScore['label'], string> = {
+  calm:       'rgba(61, 112, 104, 0.30)',
+  unsettled:  'rgba(111, 168, 157, 0.30)',
+  distressed: 'rgba(255, 204, 136, 0.35)',
+  intense:    'rgba(217, 160, 102, 0.40)',
 };
 
 const LABEL_TEXT: Record<EmotionScore['label'], string> = {
@@ -24,6 +34,7 @@ const LABEL_TEXT: Record<EmotionScore['label'], string> = {
 
 export function EmotionMeter({ score, size = 96 }: EmotionMeterProps) {
   const color   = LABEL_COLOR[score.label];
+  const glow    = LABEL_GLOW[score.label];
   const r       = (size / 2) - 6;
   const circ    = 2 * Math.PI * r;
   const filled  = circ * score.rage;
@@ -55,6 +66,7 @@ export function EmotionMeter({ score, size = 96 }: EmotionMeterProps) {
             strokeDasharray={circ}
             animate={{ strokeDashoffset: circ - filled }}
             transition={{ type: 'spring', stiffness: 60, damping: 14 }}
+            style={{ filter: `drop-shadow(0 0 6px ${glow})` }}
           />
         </svg>
 

@@ -81,7 +81,7 @@ export default function ProgressClient() {
   return (
     <div className="app-shell">
       <Sidebar />
-      <main className="progress-main">
+      <main className="progress-main page-enter">
         {/* ── Header ──────────────────────────────────────────── */}
         <div className="page-header">
           <div>

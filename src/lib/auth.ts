@@ -19,7 +19,9 @@ export async function createSession(payload: JWTPayload): Promise<string> {
     .setExpirationTime(EXPIRY)
     .sign(SECRET);
 
-  cookies().set(COOKIE, token, {
+  // Next.js 15+: cookies() returns a Promise
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -33,7 +35,8 @@ export async function createSession(payload: JWTPayload): Promise<string> {
 // ─── Verify from cookie (server components) ──────────────────
 export async function getSession(): Promise<JWTPayload | null> {
   try {
-    const token = cookies().get(COOKIE)?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get(COOKIE)?.value;
     if (!token) return null;
     const { payload } = await jwtVerify(token, SECRET);
     return payload as unknown as JWTPayload;
@@ -51,6 +54,7 @@ export async function verifyToken(req: NextRequest): Promise<JWTPayload> {
 }
 
 // ─── Clear cookie ─────────────────────────────────────────────
-export function clearSession() {
-  cookies().set(COOKIE, '', { maxAge: 0, path: '/' });
+export async function clearSession() {
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE, '', { maxAge: 0, path: '/' });
 }

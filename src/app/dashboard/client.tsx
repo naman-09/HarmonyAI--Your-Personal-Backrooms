@@ -3,11 +3,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Settings, Flame, TrendingUp, TrendingDown, Minus, ArrowRight, Plus } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Onboarding } from '@/components/onboarding';
 import { Sidebar } from '@/components/sidebar';
 import { TimeOfDayIcon } from '@/components/time-of-day-icon';
 import { useUserContext } from '@/hooks/use-user-context';
 import { ClientStyle } from '@/components/client-style';
+import { PageTransition } from '@/components/motion/page-transition';
+import { StaggerGroup, StaggerItem } from '@/components/motion/fade-in';
+import { MagneticButton } from '@/components/motion/magnetic-button';
+import { LiquidGlassIcon } from '@/components/motion/liquid-glass-icon';
 
 interface Stats {
   totalSessions:    number;
@@ -121,6 +126,7 @@ export default function DashboardClient({ userId, isAdmin, userName }: { userId:
   const greeting   = greetingFor(new Date().getHours());
   const firstName  = userName?.trim().split(/\s+/)[0];
   const todayLevel = todayMood ? MOOD_LEVELS[todayMood.mood - 1] : null;
+  const prefersReduced = useReducedMotion();
 
   return (
     <div className="app-shell">
@@ -128,23 +134,43 @@ export default function DashboardClient({ userId, isAdmin, userName }: { userId:
 
       <main className="app-main">
         {/* Top-right utility bar — settings gear */}
-        <div className="utility-bar">
-          <button
+        <motion.div
+          className="utility-bar"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+        >
+          <motion.button
             onClick={() => router.push('/settings')}
             className="utility-btn"
             title="Settings"
             aria-label="Settings"
+            whileHover={prefersReduced ? undefined : { scale: 1.08, rotate: 45 }}
+            whileTap={prefersReduced ? undefined : { scale: 0.93 }}
+            transition={{ duration: 0.18 }}
           >
             <Settings size={17} />
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
 
-        <div className="dash-inner">
+        <PageTransition className="dash-inner">
           {/* ── Hero greeting ── */}
-          <header className="dash-hero">
-            <div className="dash-burst" aria-hidden>
+          <motion.header
+            className="dash-hero"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
+          >
+            <motion.div
+              className="dash-burst"
+              aria-hidden
+              animate={prefersReduced ? undefined : {
+                rotate: 360,
+                transition: { duration: 38, repeat: Infinity, ease: 'linear' },
+              }}
+            >
               <TimeOfDayIcon tod={userCtx.timeOfDay} size={64} />
-            </div>
+            </motion.div>
             <h1 className="dash-title">
               {greeting}{firstName ? <>, <em className="dash-name">{firstName}</em></> : ''}
             </h1>
@@ -155,100 +181,145 @@ export default function DashboardClient({ userId, isAdmin, userName }: { userId:
                 <>Here&apos;s your day at a glance.</>
               )}
             </p>
-          </header>
+          </motion.header>
 
           {/* ── Today snapshot ── */}
-          <section className="snapshot-grid">
+          <StaggerGroup className="snapshot-grid" stagger={0.08} delay={0.18}>
 
-            {/* Mood card — either shows today's logged mood, or a quick logger */}
-            {loading ? (
-              <SnapshotSkeleton tall />
-            ) : todayMood && todayLevel ? (
-              <button
-                onClick={() => router.push('/journal')}
-                className="snap-card snap-card-tall snap-mood-set"
-                style={{
-                  borderColor: `color-mix(in srgb, ${todayLevel.color} 35%, var(--color-border))`,
-                }}
-              >
-                <p className="snap-label">Today&apos;s mood</p>
-                <div className="snap-mood-display">
-                  <img src={emojiImgSrc(todayLevel.emoji)} alt={todayLevel.label} width={38} height={38} className="snap-mood-emoji" />
-                  <div>
-                    <p className="snap-mood-name" style={{ color: todayLevel.color }}>
-                      {todayLevel.label}
-                    </p>
-                    <p className="snap-mood-num">{todayMood.mood} / 10</p>
+            {/* Mood card */}
+            <StaggerItem>
+              {loading ? (
+                <SnapshotSkeleton tall />
+              ) : todayMood && todayLevel ? (
+                <motion.button
+                  onClick={() => router.push('/journal')}
+                  className="snap-card snap-card-tall snap-mood-set card-lift"
+                  style={{
+                    borderColor: `color-mix(in srgb, ${todayLevel.color} 35%, var(--color-border))`,
+                  }}
+                  whileHover={prefersReduced ? undefined : { y: -3, boxShadow: '0 12px 32px rgba(0,0,0,0.22)' }}
+                  whileTap={prefersReduced ? undefined : { scale: 0.98 }}
+                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                >
+                  <p className="snap-label">Today&apos;s mood</p>
+                  <div className="snap-mood-display">
+                    <motion.img
+                      src={emojiImgSrc(todayLevel.emoji)}
+                      alt={todayLevel.label}
+                      width={38} height={38}
+                      className="snap-mood-emoji"
+                      whileHover={prefersReduced ? undefined : { scale: 1.15, rotate: [0, -8, 8, 0] }}
+                      transition={{ duration: 0.4 }}
+                    />
+                    <div>
+                      <p className="snap-mood-name" style={{ color: todayLevel.color }}>
+                        {todayLevel.label}
+                      </p>
+                      <p className="snap-mood-num">{todayMood.mood} / 10</p>
+                    </div>
                   </div>
-                </div>
-                {todayMood.note && (
-                  <p className="snap-mood-note">&ldquo;{todayMood.note.slice(0, 100)}{todayMood.note.length > 100 ? '…' : ''}&rdquo;</p>
-                )}
-                <span className="snap-link">Open journal <ArrowRight size={12} /></span>
-              </button>
-            ) : (
-              <QuickMoodLogger onSaved={(entry) => setTodayMood(entry)} />
-            )}
+                  {todayMood.note && (
+                    <p className="snap-mood-note">&ldquo;{todayMood.note.slice(0, 100)}{todayMood.note.length > 100 ? '…' : ''}&rdquo;</p>
+                  )}
+                  <span className="snap-link">Open journal <ArrowRight size={12} /></span>
+                </motion.button>
+              ) : (
+                <QuickMoodLogger onSaved={(entry) => setTodayMood(entry)} />
+              )}
+            </StaggerItem>
 
             {/* Streak card */}
-            {loading ? (
-              <SnapshotSkeleton />
-            ) : (
-              <button
-                onClick={() => router.push('/progress')}
-                className={`snap-card ${stats!.streak > 0 ? 'snap-card-accent' : ''}`}
-              >
-                <p className="snap-label">
-                  <Flame size={13} /> Journaling streak
-                </p>
-                <p className="snap-big-num">
-                  {stats!.streak}
-                  <span className="snap-big-unit">{stats!.streak === 1 ? 'day' : 'days'}</span>
-                </p>
-                <p className="snap-sub">
-                  {stats!.streak === 0
-                    ? 'A single check-in starts it.'
-                    : stats!.streak < 7
-                      ? "You're warming up — one day at a time."
-                      : stats!.streak < 30
-                        ? 'Real consistency. Keep going.'
-                        : 'Remarkable. This is the work.'}
-                </p>
-              </button>
-            )}
+            <StaggerItem>
+              {loading ? (
+                <SnapshotSkeleton />
+              ) : (
+                <motion.button
+                  onClick={() => router.push('/progress')}
+                  className={`snap-card ${stats!.streak > 0 ? 'snap-card-accent' : ''}`}
+                  whileHover={prefersReduced ? undefined : { y: -3, boxShadow: '0 12px 32px rgba(0,0,0,0.22)' }}
+                  whileTap={prefersReduced ? undefined : { scale: 0.98 }}
+                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                >
+                  <p className="snap-label">
+                    <Flame size={13} /> Journaling streak
+                  </p>
+                  <p className="snap-big-num">
+                    {stats!.streak}
+                    <span className="snap-big-unit">{stats!.streak === 1 ? 'day' : 'days'}</span>
+                  </p>
+                  <p className="snap-sub">
+                    {stats!.streak === 0
+                      ? 'A single check-in starts it.'
+                      : stats!.streak < 7
+                        ? "You're warming up — one day at a time."
+                        : stats!.streak < 30
+                          ? 'Real consistency. Keep going.'
+                          : 'Remarkable. This is the work.'}
+                  </p>
+                </motion.button>
+              )}
+            </StaggerItem>
 
             {/* Insight card */}
-            {loading ? (
-              <SnapshotSkeleton />
-            ) : (
-              <button
-                onClick={() => router.push('/progress')}
-                className="snap-card snap-card-insight"
-              >
-                <p className="snap-label">
-                  <InsightIcon kind={insight?.icon ?? 'spark'} /> Insight
-                </p>
-                <p className="snap-insight-text">{insight?.text}</p>
-                <span className="snap-link">See full progress <ArrowRight size={12} /></span>
-              </button>
-            )}
-          </section>
+            <StaggerItem>
+              {loading ? (
+                <SnapshotSkeleton />
+              ) : (
+                <motion.button
+                  onClick={() => router.push('/progress')}
+                  className="snap-card snap-card-insight"
+                  whileHover={prefersReduced ? undefined : { y: -3, boxShadow: '0 12px 32px rgba(0,0,0,0.22)' }}
+                  whileTap={prefersReduced ? undefined : { scale: 0.98 }}
+                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                >
+                  <p className="snap-label">
+                    <InsightIcon kind={insight?.icon ?? 'spark'} /> Insight
+                  </p>
+                  <p className="snap-insight-text">{insight?.text}</p>
+                  <span className="snap-link">See full progress <ArrowRight size={12} /></span>
+                </motion.button>
+              )}
+            </StaggerItem>
+          </StaggerGroup>
 
-          {/* ── Subtle floating CTA — only obvious primary action remaining ── */}
-          <button
-            onClick={startNewSession}
-            disabled={creating}
-            className="dash-floating-cta"
-            title="Open a new conversation with Harmony"
+          {/* ── Floating CTA ── */}
+          <MagneticButton strength={0.28}>
+            <motion.button
+              onClick={startNewSession}
+              disabled={creating}
+              className="dash-floating-cta"
+              title="Open a new conversation with Harmony"
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: 0.45, type: 'spring', stiffness: 280, damping: 28 }}
+              whileHover={creating || prefersReduced ? undefined : {
+                y: -3,
+                boxShadow: '0 8px 28px rgba(161, 206, 63, 0.55)',
+              }}
+              whileTap={creating || prefersReduced ? undefined : { scale: 0.96 }}
+            >
+              <LiquidGlassIcon size="xs" variant="accent" blob={false}>
+                <motion.span
+                  animate={creating ? { rotate: 360 } : { rotate: 0 }}
+                  transition={creating ? { duration: 0.8, repeat: Infinity, ease: 'linear' } : {}}
+                  style={{ display: 'flex' }}
+                >
+                  <Plus size={16} strokeWidth={2.4} />
+                </motion.span>
+              </LiquidGlassIcon>
+              <span>{creating ? 'Starting…' : 'Talk to Harmony'}</span>
+            </motion.button>
+          </MagneticButton>
+
+          <motion.p
+            className="dash-footer"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
           >
-            <Plus size={16} strokeWidth={2.4} />
-            <span>{creating ? 'Starting…' : 'Talk to Harmony'}</span>
-          </button>
-
-          <p className="dash-footer">
             Not a substitute for professional care. In crisis? Call iCall: <a href="tel:9152987821">9152987821</a>.
-          </p>
-        </div>
+          </motion.p>
+        </PageTransition>
       </main>
 
       {/* ── Styles ───────────────────────────────────────── */}
@@ -301,9 +372,8 @@ export default function DashboardClient({ userId, isAdmin, userName }: { userId:
         .dash-burst {
           display: flex; justify-content: center;
           margin-bottom: 0.75rem;
-          animation: dashBurst 38s linear infinite;
+          /* rotation handled by Framer Motion */
         }
-        @media (prefers-reduced-motion: reduce) { .dash-burst { animation: none; } }
         .dash-title {
           font-family: var(--font-serif);
           font-size: clamp(1.8rem, 4vw, 2.6rem);
@@ -340,13 +410,16 @@ export default function DashboardClient({ userId, isAdmin, userName }: { userId:
           color: var(--color-text);
           cursor: pointer;
           font-family: inherit;
-          transition: all 0.18s ease;
+          /* hover/press handled by Framer Motion */
+          transition: border-color var(--dur-base) var(--ease-out),
+                      background var(--dur-base) var(--ease-out);
           min-height: 132px;
+          position: relative;
+          overflow: hidden;
+          will-change: transform;
         }
         .snap-card:hover {
-          transform: translateY(-2px);
           border-color: var(--color-border-2);
-          box-shadow: 0 8px 24px rgba(0,0,0,0.18);
         }
         .snap-card-tall {
           grid-row: span 1;
@@ -455,15 +528,13 @@ export default function DashboardClient({ userId, isAdmin, userName }: { userId:
           cursor: pointer;
           font-family: inherit;
           box-shadow: var(--shadow-cta);
-          transition: all 0.18s var(--ease-out);
+          /* hover handled by Framer Motion */
+          transition: box-shadow var(--dur-base) var(--ease-out);
+          will-change: transform;
         }
         .dash-floating-cta:disabled { opacity: 0.6; cursor: not-allowed; }
-        .dash-floating-cta:not(:disabled):hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(161, 206, 63, 0.50);
-        }
-        /* Center the inline-flex button */
-        .dash-inner > .dash-floating-cta {
+        /* Center it */
+        .dash-inner > div > .dash-floating-cta {
           display: flex;
           margin-left: auto;
           margin-right: auto;
@@ -479,8 +550,6 @@ export default function DashboardClient({ userId, isAdmin, userName }: { userId:
         }
         .dash-footer a { color: var(--color-primary); text-decoration: none; }
         .dash-footer a:hover { text-decoration: underline; }
-
-        @keyframes dashBurst { to { transform: rotate(360deg); } }
 
         @media (max-width: 880px) {
           .snapshot-grid { grid-template-columns: 1fr; }
@@ -588,15 +657,9 @@ function QuickMoodLogger({ onSaved }: { onSaved: (e: TodayJournal) => void }) {
 function SnapshotSkeleton({ tall }: { tall?: boolean }) {
   return (
     <div
-      className="snap-card"
-      style={{
-        background: 'var(--color-surface)',
-        animation: 'shimmer 1.5s ease-in-out infinite',
-        minHeight: tall ? 168 : 132,
-      }}
-    >
-      <ClientStyle>{`@keyframes shimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.85; } }`}</ClientStyle>
-    </div>
+      className="snap-card skeleton"
+      style={{ minHeight: tall ? 168 : 132 }}
+    />
   );
 }
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { ThemedBackground } from '@/components/themed-background';
 import { ClientStyle } from '@/components/client-style';
 
@@ -95,7 +96,12 @@ export default function RegisterPage() {
 
       <main className="reg-shell">
         {/* ── Dark NEBULA island ── */}
-        <div className="reg-island">
+        <motion.div
+          className="reg-island"
+          initial={{ opacity: 0, y: 24, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 28, delay: 0.05 }}
+        >
 
           {/* Brand */}
           <div className="reg-brand">
@@ -177,7 +183,7 @@ export default function RegisterPage() {
             {' · '}
             <Link href="/terms" className="reg-legal-link">Terms</Link>
           </p>
-        </div>
+        </motion.div>
       </main>
 
       <ClientStyle>{`

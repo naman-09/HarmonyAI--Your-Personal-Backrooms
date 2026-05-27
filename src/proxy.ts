@@ -11,7 +11,8 @@ const PUBLIC_API_PATHS = [
   '/api/health',
 ];
 
-export async function middleware(req: NextRequest) {
+// Next.js 16: function must be named "proxy" (was "middleware" in ≤15)
+export async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
   // Allow public API paths through

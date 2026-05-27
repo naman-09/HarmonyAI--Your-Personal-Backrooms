@@ -69,12 +69,22 @@
   --shadow-cta:   0 4px 14px rgba(161, 206, 63, 0.38);
 
   /* ── Motion ────────────────────────────────────────────── */
-  --ease-out:    cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-in:     cubic-bezier(0.4, 0, 1, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --dur-fast:    0.12s;
-  --dur-base:    0.18s;
-  --dur-slow:    0.25s;
+  --ease-out:      cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in:       cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-expo:     cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth:   cubic-bezier(0.25, 0.1, 0.25, 1);
+  --dur-instant:   0.08s;
+  --dur-fast:      0.14s;
+  --dur-base:      0.22s;
+  --dur-slow:      0.35s;
+  --dur-slower:    0.50s;
+
+  /* ── Glass (inactive in default themes) ───────────────── */
+  --glass-blur:       0px;
+  --glass-blur-sm:    0px;
+  --glass-shine:      transparent;
+  --glass-inner-glow: transparent;
 
   /* ── Time / weather gradients (ThemedBackground) ─────── */
   --gradient-morning:   linear-gradient(135deg, #013026, #014760);
@@ -142,6 +152,99 @@
   opacity: 0 !important;
 }
 
+/* ════════════════════════════════════════════════════════
+   LIQUID GLASS THEME — iOS 26 Accurate
+   ─────────────────────────────────────────────────────────
+   KEY PRINCIPLE:
+   The glass effect lives on INTERACTIVE ELEMENTS only —
+   icons, buttons, nav pills, cards.
+   Backgrounds / panels / sidebar are NOT glass.
+   The dark nebula wallpaper shows through and is
+   physically LENSED (warped), not just blurred.
+
+   Three visual layers per element:
+     1. Refraction core  — SVG feDisplacementMap distorts bg
+     2. Specular glare   — ::before top-left gradient (sun on glass)
+     3. Rim edge glow    — ::after inset shadows for depth
+
+   Water droplet behavior:
+     - Idle:  organic border-radius blob breathing
+     - Hover: specular brightens, element lifts 2px
+     - Press: pinch + spring bounce (like squeezing water)
+   ════════════════════════════════════════════════════════ */
+
+[data-glass="true"] {
+  /* ── Keep the same nebula background ──────────────────── */
+  /* Background is NOT changed — wallpaper shows through glass */
+  --color-bg:        #010f0a;
+  --color-surface:   #013026;
+  --color-surface-2: #012d35;
+  --color-card:      #014760;
+  --color-border:    rgba(161, 206, 63, 0.10);
+  --color-border-2:  rgba(161, 206, 63, 0.18);
+  --color-border-3:  rgba(161, 206, 63, 0.30);
+
+  /* ── Typography — same as dark ─────────────────────────── */
+  --color-text:      #e8f5e0;
+  --color-muted:     #cbe58e;
+  --color-subtle:    #8bbf58;
+  --color-disabled:  #4a6d30;
+
+  /* ── Accents — nebula palette maintained ───────────────── */
+  --color-primary:   #a1ce3f;
+  --color-primary-d: #8db534;
+  --accent-hover:    #b8dc52;
+  --accent-glow:     #cbe58e;
+
+  --accent-calm:     #107e57;
+  --accent-soft:     #1fa86e;
+  --accent-light:    #7bc99a;
+
+  --color-success:   #1fa86e;
+  --color-warning:   #a1ce3f;
+  --color-danger:    #e07a3f;
+
+  /* ── Emotion scale ─────────────────────────────────────── */
+  --emo-calm:        #107e57;
+  --emo-unsettled:   #1fa86e;
+  --emo-distressed:  #a1ce3f;
+  --emo-intense:     #e07a3f;
+
+  /* ── Shadows — same as dark ────────────────────────────── */
+  --shadow-sm:    0 2px 8px  rgba(0,  0,  0, 0.30);
+  --shadow-md:    0 8px 32px rgba(0,  0,  0, 0.55);
+  --shadow-lg:    0 16px 48px rgba(0, 0, 0, 0.65);
+  --shadow-glow:  0 0  16px  rgba(161, 206, 63, 0.20);
+  --shadow-lime:  0 8px 32px rgba(0, 0, 0, 0.55),
+                  0 2px 8px  rgba(161, 206, 63, 0.12);
+  --shadow-cta:   0 4px 14px rgba(161, 206, 63, 0.38);
+
+  /* ── Radius — slightly rounder for glass elements ─────── */
+  --radius-sm:   8px;
+  --radius-md:   14px;
+  --radius-lg:   20px;
+  --radius-xl:   28px;
+  --radius-pill: 999px;
+
+  /* ── Glass element tokens ──────────────────────────────── */
+  /* These apply to .lg-icon-wrap, not to layout/bg elements */
+  --lg-glass-bg:       rgba(255, 255, 255, 0.09);
+  --lg-glass-border:   rgba(255, 255, 255, 0.22);
+  --lg-specular-top:   rgba(255, 255, 255, 0.38);
+  --lg-specular-mid:   rgba(255, 255, 255, 0.12);
+  --lg-rim-top:        rgba(255, 255, 255, 0.25);
+  --lg-rim-btm:        rgba(0,   0,   0,   0.12);
+  --lg-shadow-depth:   0 4px 20px rgba(0,0,0,0.35),
+                       0 1px 4px  rgba(0,0,0,0.20);
+
+  --gradient-cta: linear-gradient(135deg, #107e57, #a1ce3f);
+}
+
+/* ── Show animated bg in liquid glass mode ────────────────────── */
+[data-glass="true"] .themed-bg-host {
+  opacity: 1 !important;
+}
+
 /* ── High-contrast ─────────────────────────────────────────────── */
 @media (prefers-contrast: more) {
   :root {
@@ -195,9 +298,6 @@ body > * { position: relative; z-index: 1; }
   display: flex !important;
   z-index: 9999 !important;
 }
-@media (prefers-reduced-motion: reduce) {
-  .crisis-screen * { animation-duration: 2.8s !important; }
-}
 
 /* ── Scrollbar — nebula tinted ────────────────────────────────── */
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
@@ -239,5 +339,359 @@ body > * { position: relative; z-index: 1; }
 ::selection {
   background: rgba(161, 206, 63, 0.25);
   color: var(--color-text);
+}
+
+/* ════════════════════════════════════════════════════════
+   FLUID MOTION UTILITIES
+   ════════════════════════════════════════════════════════ */
+
+/* ── GPU acceleration hint ───────────────────────────────────── */
+.gpu { transform: translateZ(0); will-change: transform; }
+.gpu-opacity { will-change: opacity; }
+
+/* ── Smooth theme transitions ────────────────────────────────── */
+html {
+  transition: background-color var(--dur-slow) var(--ease-smooth);
+}
+
+/* ── Premium shimmer keyframes ───────────────────────────────── */
+@keyframes shimmer-sweep {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+@keyframes shimmer-pulse {
+  0%, 100% { opacity: 0.45; }
+  50%       { opacity: 0.85; }
+}
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-4px); }
+}
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(161, 206, 63, 0.18); }
+  50%       { box-shadow: 0 0 24px rgba(161, 206, 63, 0.36); }
+}
+@keyframes gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+
+/* ── Shimmer skeleton (premium sweep) ────────────────────────── */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(161, 206, 63, 0.06) 40%,
+    rgba(203, 229, 142, 0.10) 50%,
+    rgba(161, 206, 63, 0.06) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-sweep 2s ease-in-out infinite;
+}
+
+/* Liquid glass shimmer variant */
+[data-glass="true"] .skeleton::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 40%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.06) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* ── Hover glow utility ───────────────────────────────────────── */
+.hover-glow {
+  transition: box-shadow var(--dur-base) var(--ease-out),
+              transform   var(--dur-base) var(--ease-out);
+}
+.hover-glow:hover {
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-1px);
+}
+
+/* ── Smooth interactive transitions (buttons, links, etc.) ────── */
+.interactive {
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color     var(--dur-fast) var(--ease-out),
+    color            var(--dur-fast) var(--ease-out),
+    opacity          var(--dur-fast) var(--ease-out),
+    box-shadow       var(--dur-base) var(--ease-out),
+    transform        var(--dur-base) var(--ease-spring);
+}
+.interactive:active { transform: scale(0.97); }
+
+/* ── Card lift ───────────────────────────────────────────────── */
+.card-lift {
+  transition:
+    transform  var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+.card-lift:hover {
+  transform:   translateY(-3px);
+  box-shadow:  var(--shadow-md);
+  border-color: var(--color-border-2);
+}
+.card-lift:active { transform: translateY(-1px); }
+
+/* ── Animated gradient border ────────────────────────────────── */
+.gradient-border {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(161, 206, 63, 0.25),
+    rgba(16, 126, 87, 0.15),
+    rgba(161, 206, 63, 0.08)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+.gradient-border:hover::before { opacity: 1; }
+
+/* ── Glass button ────────────────────────────────────────────── */
+.btn-glass {
+  background:   rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border:       1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  color:        var(--color-text);
+  cursor:       pointer;
+  font-family:  inherit;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-spring),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.20);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25),
+              inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+.btn-glass:active {
+  transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+/* ── CTA button pulse ─────────────────────────────────────────── */
+.btn-cta-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+.btn-cta-pulse:hover { animation: none; }
+
+/* ── Animated gradient text ──────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-primary), var(--accent-glow), var(--accent-soft));
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 4s ease infinite;
+}
+
+/* ── Smooth focus ring ───────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+  transition: outline-offset var(--dur-fast) var(--ease-out);
+}
+
+/* ── Reduce motion — system-level ────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration:        0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration:       0.01ms !important;
+    scroll-behavior:           auto !important;
+  }
+  /* Exception: crisis screen always animates, even reduced */
+  .crisis-screen * {
+    animation-duration:        2.8s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
+
+/* ── Scrollbar — liquid glass variant ────────────────────────── */
+[data-glass="true"] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+[data-glass="true"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+/* ── Smooth page transitions ─────────────────────────────────── */
+.page-enter {
+  animation: page-in var(--dur-slow) var(--ease-expo) both;
+}
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   iOS 26 LIQUID GLASS — Element-level glass system
+   ────────────────────────────────────────────────────────────────
+   The glass effect lives ONLY on interactive elements:
+   .lg-icon-wrap is the core CSS class applied by LiquidGlassIcon.
+
+   Visual layer stack (bottom → top):
+     1. Backdrop warp    — SVG feDisplacementMap (Chromium)
+     2. Frosted core     — backdrop-filter blur + saturate
+     3. ::before glare   — top-left specular highlight
+     4. ::after rim      — inset edge glow + depth shadow
+     5. .lg-icon-content — the actual icon/text, zIndex 3
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Core glass wrapper ─────────────────────────────────────── */
+.lg-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  isolation: isolate;
+  cursor: pointer;
+  flex-shrink: 0;
+  overflow: visible; /* allow rim glow to breathe */
+
+  /* Frosted translucent core */
+  background: var(--lg-bg, rgba(255,255,255,0.08));
+  border: 1px solid var(--lg-border, rgba(255,255,255,0.22));
+  border-radius: var(--lg-radius, 10px);
+
+  /* iOS 26 backdrop stack:
+     SVG refraction (Chromium) + blur + saturate + brightness */
+  backdrop-filter: var(--lg-bdf,
+    blur(14px) saturate(1.9) brightness(1.08));
+  -webkit-backdrop-filter: var(--lg-bdf,
+    blur(14px) saturate(1.9) brightness(1.08));
+
+  /* Depth shadow */
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.30),
+    0 1px 4px  rgba(0,0,0,0.18),
+    inset 0 -1px 0 rgba(0,0,0,0.12);
+
+  transition:
+    box-shadow var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+/* ── Specular glare layer (::before) ────────────────────────── */
+/* Simulates sunlight striking the top-left curve of the glass */
+.lg-icon-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 1;
+  pointer-events: none;
+
+  /* Hot-spot at top-left, fading toward bottom-right */
+  background: radial-gradient(
+    ellipse 80% 55% at 25% 20%,
+    var(--lg-specular, rgba(255,255,255,0.32)) 0%,
+    rgba(255,255,255,0.10) 45%,
+    transparent 70%
+  );
+  mix-blend-mode: screen;
+}
+
+/* ── Rim edge glow layer (::after) ──────────────────────────── */
+/* Bright top rim, subtle bottom shadow — like a real glass edge */
+.lg-icon-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 2;
+  pointer-events: none;
+
+  box-shadow:
+    inset 0  1px 0  rgba(255,255,255,0.28),   /* bright top rim   */
+    inset 0 -1px 0  rgba(0,0,0,0.10),          /* subtle bottom     */
+    inset 1px 0 0   rgba(255,255,255,0.12),    /* left rim shimmer  */
+    0 0 12px 1px    var(--lg-glow, rgba(255,255,255,0.04)); /* outer glow */
+}
+
+/* ── Hover state — brighten specular ───────────────────────── */
+.lg-icon-wrap:hover::before {
+  background: radial-gradient(
+    ellipse 80% 55% at 25% 20%,
+    rgba(255,255,255,0.48) 0%,
+    rgba(255,255,255,0.16) 45%,
+    transparent 70%
+  );
+}
+.lg-icon-wrap:hover {
+  box-shadow:
+    0 6px 28px rgba(0,0,0,0.38),
+    0 2px 6px  rgba(0,0,0,0.22),
+    inset 0 -1px 0 rgba(0,0,0,0.10);
+}
+
+/* ── Water-droplet blob morphing animation ──────────────────── */
+@keyframes lg-blob-morph {
+  0%   { border-radius: 38% 62% 54% 46% / 42% 48% 52% 58%; }
+  15%  { border-radius: 50% 50% 40% 60% / 55% 45% 55% 45%; }
+  30%  { border-radius: 60% 40% 65% 35% / 40% 60% 40% 60%; }
+  45%  { border-radius: 42% 58% 48% 52% / 62% 38% 62% 38%; }
+  60%  { border-radius: 55% 45% 38% 62% / 50% 50% 45% 55%; }
+  75%  { border-radius: 45% 55% 60% 40% / 38% 62% 48% 52%; }
+  90%  { border-radius: 52% 48% 45% 55% / 46% 54% 42% 58%; }
+  100% { border-radius: 38% 62% 54% 46% / 42% 48% 52% 58%; }
+}
+
+/* .lg-blob — apply organic breathing morphing to round icons */
+.lg-blob {
+  animation: lg-blob-morph 8s ease-in-out infinite;
+  /* override the sharp border-radius while blob is active */
+}
+
+/* ── Chromatic aberration class ─────────────────────────────── */
+/* Apply SVG prism-fringe filter; only active when .lg-chroma present */
+.lg-chroma {
+  filter: url(#lg-chroma);
+}
+
+/* ── Reduced motion — turn off blob & animation ─────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .lg-blob {
+    animation: none;
+  }
 }
 

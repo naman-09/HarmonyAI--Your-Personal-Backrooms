@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { ThemedBackground } from '@/components/themed-background';
 import { ClientStyle } from '@/components/client-style';
 
@@ -64,7 +65,12 @@ export default function LoginPage() {
 
       <main className="login-shell">
         {/* ── Dark NEBULA island ── */}
-        <div className="login-island">
+        <motion.div
+          className="login-island"
+          initial={{ opacity: 0, y: 24, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 28, delay: 0.05 }}
+        >
 
           {/* Brand */}
           <div className="login-brand">
@@ -132,7 +138,7 @@ export default function LoginPage() {
             {' · '}
             <Link href="/terms" className="login-legal-link">Terms</Link>
           </p>
-        </div>
+        </motion.div>
       </main>
 
       <ClientStyle>{`
@@ -157,6 +163,19 @@ export default function LoginPage() {
           box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22), 0 4px 16px rgba(0, 0, 0, 0.14);
           position: relative;
           z-index: 1;
+          transition: box-shadow var(--dur-slow) var(--ease-out),
+                      background var(--dur-slow) var(--ease-smooth);
+        }
+
+        /* Liquid glass login island */
+        [data-glass="true"] .login-island {
+          background: rgba(255, 255, 255, 0.07) !important;
+          backdrop-filter: blur(28px) saturate(1.6) !important;
+          -webkit-backdrop-filter: blur(28px) saturate(1.6) !important;
+          border: 1px solid rgba(255, 255, 255, 0.12) !important;
+          box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55),
+                      0 4px 16px rgba(0, 0, 0, 0.35),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
         }
 
         /* ── Brand section ── */

@@ -6,10 +6,13 @@ import { toast } from 'sonner';
 import {
   PanelLeftClose, PanelLeftOpen, Plus, MoreHorizontal, Pin, PinOff, Trash2,
   Pencil, Check, X, Home, TrendingUp, BookOpen, Sparkles, Settings as SettingsIcon,
-  Shield, LogOut, Sun, Moon, RotateCw, MapPinOff,
+  Shield, LogOut, Sun, Moon, Glasses, RotateCw, MapPinOff,
 } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ClientStyle } from '@/components/client-style';
 import { useTheme } from '@/components/theme-provider';
+import type { Theme } from '@/components/theme-provider';
+import { LiquidGlassIcon } from '@/components/motion/liquid-glass-icon';
 import { TimeOfDayIcon } from '@/components/time-of-day-icon';
 import { useUserContext, describeTimeOfDay } from '@/hooks/use-user-context';
 
@@ -40,7 +43,7 @@ const COLLAPSE_KEY = 'harmony-sidebar-collapsed';
 export function Sidebar({ isAdmin }: SidebarProps) {
   const router   = useRouter();
   const pathname = usePathname();
-  const { theme, toggle: toggleTheme } = useTheme();
+  const { theme, glassMode, toggle: toggleTheme, toggleGlass } = useTheme();
   const userCtx = useUserContext();
 
   const [collapsed,   setCollapsed]   = useState(false);
@@ -183,194 +186,415 @@ export function Sidebar({ isAdmin }: SidebarProps) {
   const recent   = sortedSessions.filter((s) => !s.pinned);
 
   // ── Render ─────────────────────────────────────────────────
+  const prefersReduced = useReducedMotion();
+
+  const themeIcon: Record<Theme, React.ReactNode> = {
+    dark:  <Sun size={15} />,
+    light: <Moon size={15} />,
+  };
+  const themeLabel: Record<Theme, string> = {
+    dark:  'Light mode',
+    light: 'Dark mode',
+  };
+
   return (
-    <aside className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''}`}>
+    <motion.aside
+      className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''}`}
+      initial={false}
+      animate={{ width: collapsed ? 60 : 260 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 35 }}
+      style={{ overflow: 'hidden' }}
+    >
       {/* ── Top: brand + collapse toggle ── */}
       <div className="sidebar-top">
-        {!collapsed && (
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="brand"
-            title="Harmony home"
-          >
-            <span className="brand-icon">
-              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
-                <g fill="var(--color-primary)">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <rect
-                      key={i}
-                      x="11" y="2" width="2" height="6" rx="1"
-                      transform={`rotate(${i * 45} 12 12)`}
-                      opacity={0.5 + (i % 3) * 0.18}
-                    />
-                  ))}
-                </g>
-                <circle cx="12" cy="12" r="3" fill="var(--color-primary)" />
-              </svg>
-            </span>
-            <span className="brand-name">Harmony</span>
-          </button>
-        )}
-        <button
+        <AnimatePresence mode="wait" initial={false}>
+          {!collapsed && (
+            <motion.button
+              key="brand"
+              onClick={() => router.push('/dashboard')}
+              className="brand"
+              title="Harmony home"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+            >
+              <span className="brand-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
+                  <g fill="var(--color-primary)">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <rect
+                        key={i}
+                        x="11" y="2" width="2" height="6" rx="1"
+                        transform={`rotate(${i * 45} 12 12)`}
+                        opacity={0.5 + (i % 3) * 0.18}
+                      />
+                    ))}
+                  </g>
+                  <circle cx="12" cy="12" r="3" fill="var(--color-primary)" />
+                </svg>
+              </span>
+              <span className="brand-name">Harmony</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
+        <motion.button
           onClick={() => setCollapsed((v) => !v)}
           className="collapse-toggle"
           title={collapsed ? 'Open sidebar (Ctrl+.)' : 'Close sidebar (Ctrl+.)'}
           aria-label={collapsed ? 'Open sidebar' : 'Close sidebar'}
+          whileHover={{ scale: prefersReduced ? 1 : 1.08 }}
+          whileTap={{ scale: prefersReduced ? 1 : 0.93 }}
+          transition={{ duration: 0.12 }}
         >
-          {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-        </button>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={collapsed ? 'open' : 'close'}
+              initial={{ opacity: 0, rotate: collapsed ? -45 : 45 }}
+              animate={{ opacity: 1, rotate: 0 }}
+              exit={{ opacity: 0, rotate: collapsed ? 45 : -45 }}
+              transition={{ duration: 0.16 }}
+              style={{ display: 'flex' }}
+            >
+              {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+            </motion.span>
+          </AnimatePresence>
+        </motion.button>
       </div>
 
       {/* ── New chat ── */}
-      <button
+      <motion.button
         onClick={startNewChat}
         disabled={creating}
         className="new-chat-btn"
         title="Start a new conversation"
+        whileHover={creating ? undefined : { scale: prefersReduced ? 1 : 1.02 }}
+        whileTap={creating ? undefined : { scale: prefersReduced ? 1 : 0.97 }}
+        transition={{ duration: 0.12 }}
       >
-        <Plus size={16} strokeWidth={2.4} />
-        {!collapsed && <span>{creating ? 'Starting…' : 'New conversation'}</span>}
-      </button>
+        <LiquidGlassIcon size="xs" variant="accent" blob={false}>
+          <motion.span
+            animate={creating ? { rotate: 360 } : { rotate: 0 }}
+            transition={creating ? { duration: 0.8, repeat: Infinity, ease: 'linear' } : { duration: 0 }}
+            style={{ display: 'flex' }}
+          >
+            <Plus size={16} strokeWidth={2.4} />
+          </motion.span>
+        </LiquidGlassIcon>
+        <AnimatePresence mode="wait" initial={false}>
+          {!collapsed && (
+            <motion.span
+              key="label"
+              initial={{ opacity: 0, x: -4 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -4 }}
+              transition={{ duration: 0.14 }}
+            >
+              {creating ? 'Starting…' : 'New conversation'}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
 
       {/* ── Nav links ── */}
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.map((item, idx) => {
           const Icon   = item.icon;
           const active = pathname === item.href;
           return (
-            <button
+            <motion.button
               key={item.href}
               onClick={() => router.push(item.href)}
               className={`nav-item ${active ? 'nav-item-active' : ''}`}
               title={item.label}
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.04, type: 'spring', stiffness: 300, damping: 32 }}
+              whileHover={{ x: prefersReduced ? 0 : 2 }}
+              whileTap={{ scale: prefersReduced ? 1 : 0.97 }}
             >
-              <Icon size={16} />
-              {!collapsed && <span>{item.label}</span>}
-            </button>
+              <LiquidGlassIcon size="xs" active={active} blob={false}>
+                <Icon size={16} />
+              </LiquidGlassIcon>
+              <AnimatePresence mode="wait" initial={false}>
+                {!collapsed && (
+                  <motion.span
+                    key="label"
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -6 }}
+                    transition={{ duration: 0.14 }}
+                  >
+                    {item.label}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
           );
         })}
         {isAdmin && (
-          <button
+          <motion.button
             onClick={() => router.push('/admin')}
             className={`nav-item nav-item-admin ${pathname === '/admin' ? 'nav-item-active' : ''}`}
             title="Crisis log"
+            whileHover={{ x: prefersReduced ? 0 : 2 }}
+            whileTap={{ scale: prefersReduced ? 1 : 0.97 }}
           >
-            <Shield size={16} />
-            {!collapsed && <span>Crisis log</span>}
-          </button>
+            <LiquidGlassIcon size="xs" variant="danger" blob={false}>
+              <Shield size={16} />
+            </LiquidGlassIcon>
+            <AnimatePresence mode="wait" initial={false}>
+              {!collapsed && (
+                <motion.span
+                  key="label"
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -6 }}
+                  transition={{ duration: 0.14 }}
+                >
+                  Crisis log
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
         )}
       </nav>
 
       {/* ── Chats ── */}
-      {!collapsed && (
-        <div className="chats-section" ref={menuRef}>
-          {pinned.length > 0 && (
-            <>
-              <p className="chats-eyebrow">Pinned</p>
-              <div className="chats-list">
-                {pinned.map((s) => (
-                  <ChatRow
-                    key={s.sessionId} s={s}
-                    active={pathname?.includes(s.sessionId) ?? false}
-                    menuOpen={menuFor === s.sessionId}
-                    renaming={renamingId === s.sessionId}
-                    renameDraft={renameDraft}
-                    setRenameDraft={setRenameDraft}
-                    onOpen={() => router.push(`/chat/${s.sessionId}`)}
-                    onMenu={() => setMenuFor(menuFor === s.sessionId ? null : s.sessionId)}
-                    onPin={() => togglePin(s)}
-                    onRename={() => beginRename(s)}
-                    onCommitRename={() => commitRename(s)}
-                    onCancelRename={() => setRenamingId(null)}
-                    onDelete={() => deleteChat(s)}
+      <AnimatePresence mode="wait" initial={false}>
+        {!collapsed && (
+          <motion.div
+            key="chats-section"
+            className="chats-section"
+            ref={menuRef}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+          >
+            {pinned.length > 0 && (
+              <>
+                <p className="chats-eyebrow">Pinned</p>
+                <div className="chats-list">
+                  {pinned.map((s) => (
+                    <ChatRow
+                      key={s.sessionId} s={s}
+                      active={pathname?.includes(s.sessionId) ?? false}
+                      menuOpen={menuFor === s.sessionId}
+                      renaming={renamingId === s.sessionId}
+                      renameDraft={renameDraft}
+                      setRenameDraft={setRenameDraft}
+                      onOpen={() => router.push(`/chat/${s.sessionId}`)}
+                      onMenu={() => setMenuFor(menuFor === s.sessionId ? null : s.sessionId)}
+                      onPin={() => togglePin(s)}
+                      onRename={() => beginRename(s)}
+                      onCommitRename={() => commitRename(s)}
+                      onCancelRename={() => setRenamingId(null)}
+                      onDelete={() => deleteChat(s)}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            <p className="chats-eyebrow" style={{ marginTop: pinned.length > 0 ? 12 : 0 }}>
+              Recent
+            </p>
+            {loadingList ? (
+              <div className="chats-loading">
+                {[1, 2, 3].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="chat-skel skeleton"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.06 }}
                   />
                 ))}
               </div>
-            </>
-          )}
-
-          <p className="chats-eyebrow" style={{ marginTop: pinned.length > 0 ? 12 : 0 }}>
-            Recent
-          </p>
-          {loadingList ? (
-            <div className="chats-loading">
-              {[1, 2, 3].map((i) => <div key={i} className="chat-skel" />)}
-            </div>
-          ) : recent.length === 0 ? (
-            <p className="chats-empty">
-              {pinned.length > 0 ? 'No other chats yet.' : 'Start your first conversation ↑'}
-            </p>
-          ) : (
-            <div className="chats-list">
-              {recent.map((s) => (
-                <ChatRow
-                  key={s.sessionId} s={s}
-                  active={pathname?.includes(s.sessionId) ?? false}
-                  menuOpen={menuFor === s.sessionId}
-                  renaming={renamingId === s.sessionId}
-                  renameDraft={renameDraft}
-                  setRenameDraft={setRenameDraft}
-                  onOpen={() => router.push(`/chat/${s.sessionId}`)}
-                  onMenu={() => setMenuFor(menuFor === s.sessionId ? null : s.sessionId)}
-                  onPin={() => togglePin(s)}
-                  onRename={() => beginRename(s)}
-                  onCommitRename={() => commitRename(s)}
-                  onCancelRename={() => setRenamingId(null)}
-                  onDelete={() => deleteChat(s)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+            ) : recent.length === 0 ? (
+              <p className="chats-empty">
+                {pinned.length > 0 ? 'No other chats yet.' : 'Start your first conversation ↑'}
+              </p>
+            ) : (
+              <AnimatePresence initial={false}>
+                <div className="chats-list">
+                  {recent.map((s, i) => (
+                    <motion.div
+                      key={s.sessionId}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: -8, transition: { duration: 0.14 } }}
+                      transition={{ delay: i * 0.03, type: 'spring', stiffness: 320, damping: 32 }}
+                    >
+                      <ChatRow
+                        s={s}
+                        active={pathname?.includes(s.sessionId) ?? false}
+                        menuOpen={menuFor === s.sessionId}
+                        renaming={renamingId === s.sessionId}
+                        renameDraft={renameDraft}
+                        setRenameDraft={setRenameDraft}
+                        onOpen={() => router.push(`/chat/${s.sessionId}`)}
+                        onMenu={() => setMenuFor(menuFor === s.sessionId ? null : s.sessionId)}
+                        onPin={() => togglePin(s)}
+                        onRename={() => beginRename(s)}
+                        onCommitRename={() => commitRename(s)}
+                        onCancelRename={() => setRenamingId(null)}
+                        onDelete={() => deleteChat(s)}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              </AnimatePresence>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── "Right now" panel — local time + weather + city ── */}
-      {!collapsed && (
-        <NowPanel
-          loading={userCtx.loading}
-          weather={userCtx.weather}
-          tod={userCtx.timeOfDay}
-          error={userCtx.error}
-          onRefresh={() => userCtx.refresh()}
-        />
-      )}
+      <AnimatePresence initial={false}>
+        {!collapsed && (
+          <motion.div
+            key="now-panel"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+          >
+            <NowPanel
+              loading={userCtx.loading}
+              weather={userCtx.weather}
+              tod={userCtx.timeOfDay}
+              error={userCtx.error}
+              onRefresh={() => userCtx.refresh()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       {collapsed && userCtx.weather && (
         <div className="now-panel-mini" title={`${userCtx.weather.description} · ${userCtx.weather.temperatureC}°`}>
           <TimeOfDayIcon tod={userCtx.timeOfDay} size={24} />
         </div>
       )}
 
-      {/* ── Bottom: theme + logout ── */}
+      {/* ── Bottom: theme toggle + glass overhaul + logout ── */}
       <div className="sidebar-bottom">
-        <button
+
+        {/* Dark / Light toggle */}
+        <motion.button
           onClick={toggleTheme}
           className="bottom-btn"
           title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          whileHover={{ x: prefersReduced ? 0 : 2 }}
+          whileTap={{ scale: prefersReduced ? 1 : 0.97 }}
         >
-          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-          {!collapsed && <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>}
-        </button>
-        <button onClick={logout} className="bottom-btn" title="Sign out">
-          <LogOut size={15} />
-          {!collapsed && <span>Sign out</span>}
-        </button>
+          <LiquidGlassIcon size="xs" blob={false}>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={theme}
+                initial={{ opacity: 0, rotate: -30, scale: 0.8 }}
+                animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                exit={{ opacity: 0, rotate: 30, scale: 0.8 }}
+                transition={{ duration: 0.2 }}
+                style={{ display: 'flex' }}
+              >
+                {themeIcon[theme]}
+              </motion.span>
+            </AnimatePresence>
+          </LiquidGlassIcon>
+          <AnimatePresence mode="wait" initial={false}>
+            {!collapsed && (
+              <motion.span
+                key={`label-${theme}`}
+                initial={{ opacity: 0, x: -4 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -4 }}
+                transition={{ duration: 0.14 }}
+              >
+                {themeLabel[theme]}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </motion.button>
+
+        {/* Liquid Glass overhaul toggle — completely separate from dark/light */}
+        <motion.button
+          onClick={toggleGlass}
+          className={`bottom-btn bottom-btn-glass ${glassMode ? 'bottom-btn-glass-on' : ''}`}
+          title={glassMode ? 'Turn off Liquid Glass' : 'Turn on Liquid Glass'}
+          whileHover={{ x: prefersReduced ? 0 : 2 }}
+          whileTap={{ scale: prefersReduced ? 1 : 0.97 }}
+        >
+          <LiquidGlassIcon size="xs" variant={glassMode ? 'accent' : 'default'} blob={glassMode}>
+            <motion.span
+              animate={glassMode
+                ? { scale: 1.1, rotate: 15 }
+                : { scale: 1,   rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+              style={{ display: 'flex' }}
+            >
+              <Glasses size={15} />
+            </motion.span>
+          </LiquidGlassIcon>
+          <AnimatePresence mode="wait" initial={false}>
+            {!collapsed && (
+              <motion.span
+                key={`glass-label-${glassMode}`}
+                initial={{ opacity: 0, x: -4 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -4 }}
+                transition={{ duration: 0.14 }}
+              >
+                {glassMode ? 'Glass: On' : 'Liquid Glass'}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </motion.button>
+        <motion.button
+          onClick={logout}
+          className="bottom-btn"
+          title="Sign out"
+          whileHover={{ x: prefersReduced ? 0 : 2 }}
+          whileTap={{ scale: prefersReduced ? 1 : 0.97 }}
+        >
+          <LiquidGlassIcon size="xs" blob={false}>
+            <LogOut size={15} />
+          </LiquidGlassIcon>
+          <AnimatePresence mode="wait" initial={false}>
+            {!collapsed && (
+              <motion.span
+                key="logout-label"
+                initial={{ opacity: 0, x: -4 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -4 }}
+                transition={{ duration: 0.14 }}
+              >
+                Sign out
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </motion.button>
       </div>
 
       {/* ── Styles ─────────────────────────────────────────── */}
       <ClientStyle>{`
         .sidebar {
-          width: 260px;
           flex-shrink: 0;
           display: flex; flex-direction: column;
           height: 100dvh;
           background: var(--color-surface);
           border-right: 1px solid var(--color-border);
-          transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          /* Width animated by Framer Motion — no CSS transition needed */
           position: sticky; top: 0;
           z-index: 20;
+          overflow: hidden;
+          /* Smooth backdrop-filter transition for theme changes */
+          transition: background var(--dur-slower) var(--ease-smooth),
+                      border-color var(--dur-slower) var(--ease-smooth),
+                      backdrop-filter var(--dur-slower) var(--ease-smooth);
         }
         .sidebar-collapsed {
-          width: 60px;
+          /* width handled by framer-motion */
         }
         .sidebar-top {
           display: flex; align-items: center; justify-content: space-between;
@@ -585,6 +809,20 @@ export function Sidebar({ isAdmin }: SidebarProps) {
         .bottom-btn:hover { background: var(--color-bg); color: var(--color-text); }
         .sidebar-collapsed .bottom-btn { justify-content: center; padding: 8px 0; }
 
+        /* Glass toggle — accent glow when on, separator above */
+        .bottom-btn-glass {
+          border-top: 1px solid var(--color-border);
+          margin-top: 2px;
+          padding-top: 10px;
+        }
+        .bottom-btn-glass-on {
+          color: var(--color-primary);
+        }
+        .bottom-btn-glass-on:hover {
+          background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+          color: var(--color-primary);
+        }
+
         /* Scrollbar — thin, inherits theme */
         .chats-section::-webkit-scrollbar { width: 6px; }
         .chats-section::-webkit-scrollbar-track { background: transparent; }
@@ -611,7 +849,7 @@ export function Sidebar({ isAdmin }: SidebarProps) {
           }
         }
       `}</ClientStyle>
-    </aside>
+    </motion.aside>
   );
 }
 
@@ -673,19 +911,29 @@ function ChatRow({
           >
             <MoreHorizontal size={14} />
           </button>
-          {menuOpen && (
-            <div className="chat-menu" role="menu">
-              <button onClick={onRename} role="menuitem">
-                <Pencil size={13} /> Rename
-              </button>
-              <button onClick={onPin} role="menuitem">
-                {s.pinned ? <><PinOff size={13} /> Unpin</> : <><Pin size={13} /> Pin</>}
-              </button>
-              <button onClick={onDelete} role="menuitem" className="menu-item-danger">
-                <Trash2 size={13} /> Delete
-              </button>
-            </div>
-          )}
+          <AnimatePresence>
+            {menuOpen && (
+              <motion.div
+                className="chat-menu"
+                role="menu"
+                initial={{ opacity: 0, scale: 0.92, y: -6 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.94, y: -4 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                style={{ transformOrigin: 'top right' }}
+              >
+                <button onClick={onRename} role="menuitem">
+                  <Pencil size={13} /> Rename
+                </button>
+                <button onClick={onPin} role="menuitem">
+                  {s.pinned ? <><PinOff size={13} /> Unpin</> : <><Pin size={13} /> Pin</>}
+                </button>
+                <button onClick={onDelete} role="menuitem" className="menu-item-danger">
+                  <Trash2 size={13} /> Delete
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
 
@@ -801,10 +1049,7 @@ function ChatRow({
         }
         .chat-rename-btn:hover { background: var(--color-bg); color: var(--color-text); }
 
-        @keyframes menuFade {
-          from { opacity: 0; transform: translateY(-2px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
+        /* menu animation handled by Framer Motion */
       `}</ClientStyle>
     </div>
   );

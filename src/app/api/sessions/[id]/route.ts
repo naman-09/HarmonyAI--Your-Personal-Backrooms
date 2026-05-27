@@ -6,10 +6,10 @@ import { invalidateSession } from '@/lib/redis';
 // GET /api/sessions/[id] — fetch session + messages
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const userId    = Number(req.headers.get('x-user-id'));
-  const sessionId = params.id;
+  const { id: sessionId } = await params;
 
   const session = await db.query.sessions.findFirst({
     where: eq(sessions.sessionId, sessionId),
@@ -35,10 +35,10 @@ export async function GET(
 //   Multiple fields allowed in one PATCH.
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const userId    = Number(req.headers.get('x-user-id'));
-  const sessionId = params.id;
+  const { id: sessionId } = await params;
 
   const session = await db.query.sessions.findFirst({
     where: eq(sessions.sessionId, sessionId),
@@ -84,10 +84,10 @@ export async function PATCH(
 // DELETE /api/sessions/[id] — permanently delete session + its messages
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const userId    = Number(req.headers.get('x-user-id'));
-  const sessionId = params.id;
+  const { id: sessionId } = await params;
 
   const session = await db.query.sessions.findFirst({
     where: eq(sessions.sessionId, sessionId),

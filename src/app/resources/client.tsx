@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { ChevronDown, Search, Wind, Anchor, Phone, BookOpen, Dumbbell } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { BreathingExercise } from '@/components/breathing-exercise';
 import { Sidebar } from '@/components/sidebar';
 import { ClientStyle } from '@/components/client-style';
@@ -313,7 +314,7 @@ export default function ResourcesClient() {
   return (
     <div className="app-shell">
       <Sidebar />
-      <main className="resources-main">
+      <main className="resources-main page-enter">
         {/* ── Header ──────────────────────────────────────────── */}
         <div className="page-header">
           <div>
@@ -430,14 +431,24 @@ export default function ResourcesClient() {
                       </div>
                     </div>
                   </div>
-                  <ChevronDown
-                    size={18}
-                    className="resource-chevron"
-                    style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                  />
+                  <motion.span
+                    animate={{ rotate: expanded ? 180 : 0 }}
+                    transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                    style={{ display: 'flex', color: 'var(--color-muted)', flexShrink: 0 }}
+                  >
+                    <ChevronDown size={18} />
+                  </motion.span>
                 </button>
-                {expanded && (
-                  <div className="resource-body">
+                <AnimatePresence initial={false}>
+                  {expanded && (
+                  <motion.div
+                    className="resource-body"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                    style={{ overflow: 'hidden' }}
+                  >
                     {r.content.split('\n').map((line, i) => {
                       const trimmed = line.trim();
                       if (!trimmed) return <div key={i} style={{ height: 8 }} />;
@@ -453,8 +464,9 @@ export default function ResourcesClient() {
                       }
                       return <p key={i} className="resource-p">{trimmed}</p>;
                     })}
-                  </div>
-                )}
+                  </motion.div>
+                  )}
+                </AnimatePresence>
               </article>
             );
           })}

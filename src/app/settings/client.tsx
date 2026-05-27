@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 import { Sidebar } from '@/components/sidebar';
 import { TimeOfDayIcon, getIconStyle, setIconStyle, type IconStyle } from '@/components/time-of-day-icon';
 import { getTimeOfDay } from '@/hooks/use-user-context';
@@ -9,7 +10,8 @@ import { useThemeEngine } from '@/lib/theme/store';
 import { PRESETS } from '@/lib/theme/presets';
 import { describeSeason } from '@/lib/theme/engine';
 import type { MotionMode } from '@/lib/theme/types';
-import { Camera, Mic, MapPin, Calendar, Bell, Check, X as XIcon, Zap, ZapOff, Activity, MonitorSmartphone } from 'lucide-react';
+import { useTheme, type Theme } from '@/components/theme-provider';
+import { Camera, Mic, MapPin, Calendar, Bell, Check, X as XIcon, Zap, ZapOff, Activity, MonitorSmartphone, Moon, Sun, Glasses } from 'lucide-react';
 
 interface SettingsData {
   trustedContactName:  string;
@@ -41,6 +43,8 @@ export default function SettingsClient({ initial }: { initial: SettingsData }) {
 
   // Theme engine controls
   const theme = useThemeEngine();
+  // Color theme (dark / light) + independent glass overhaul
+  const { theme: colorTheme, glassMode, setTheme: setColorTheme, setGlassMode } = useTheme();
 
   useEffect(() => {
     setIconStyleState(getIconStyle());
@@ -144,7 +148,7 @@ export default function SettingsClient({ initial }: { initial: SettingsData }) {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--color-bg)' }}>
       <Sidebar />
-      <main style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '2.5rem 2rem 3rem' }}>
+      <main className="page-enter" style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '2.5rem 2rem 3rem' }}>
         <div style={{ maxWidth: 640, margin: '0 auto' }}>
 
       {/* Header */}
@@ -186,6 +190,94 @@ export default function SettingsClient({ initial }: { initial: SettingsData }) {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* ── Color theme ── */}
+      <div style={card}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: '0.75rem' }}>Color theme</h2>
+        <p style={{ fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+          Choose between dark or light color scheme.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+          {([
+            { id: 'dark'  as Theme, label: 'Dark',  icon: <Moon size={18} />, desc: 'Deep ocean nebula' },
+            { id: 'light' as Theme, label: 'Light', icon: <Sun  size={18} />, desc: 'Ocean at noon'     },
+          ]).map((t) => {
+            const active = colorTheme === t.id;
+            return (
+              <motion.button
+                key={t.id}
+                onClick={() => setColorTheme(t.id)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.14 }}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                  padding: '16px 8px',
+                  background: active
+                    ? 'color-mix(in srgb, var(--color-primary) 12%, var(--color-surface-2))'
+                    : 'var(--color-surface-2)',
+                  border: active ? '1.5px solid var(--color-primary)' : '1.5px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  color: active ? 'var(--color-primary)' : 'var(--color-muted)',
+                  transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+                }}
+              >
+                {t.icon}
+                <span style={{ fontSize: 12.5, fontWeight: 600 }}>{t.label}</span>
+                <span style={{ fontSize: 10.5, opacity: 0.75, textAlign: 'center', lineHeight: 1.3 }}>{t.desc}</span>
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Liquid Glass overhaul ── */}
+      <div style={card}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Glasses size={17} style={{ color: glassMode ? 'var(--color-primary)' : 'var(--color-muted)' }} />
+              Liquid Glass
+            </h2>
+            <p style={{ fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.6, margin: 0 }}>
+              iOS 26-style glass overhaul. Applies frosted refraction, specular highlights,
+              and water-droplet physics to every interactive element — independently of your color theme.
+            </p>
+          </div>
+          {/* Toggle pill */}
+          <motion.button
+            onClick={() => setGlassMode(!glassMode)}
+            style={{
+              flexShrink: 0,
+              width: 48, height: 26,
+              borderRadius: 13,
+              background: glassMode ? 'var(--color-primary)' : 'var(--color-border-2)',
+              border: 'none',
+              cursor: 'pointer',
+              position: 'relative',
+              transition: 'background 0.2s',
+            }}
+            title={glassMode ? 'Turn off Liquid Glass' : 'Turn on Liquid Glass'}
+            whileTap={{ scale: 0.95 }}
+          >
+            <motion.span
+              animate={{ x: glassMode ? 24 : 2 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              style={{
+                position: 'absolute',
+                top: 3, left: 0,
+                width: 20, height: 20,
+                borderRadius: '50%',
+                background: '#fff',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
+                display: 'block',
+              }}
+            />
+          </motion.button>
         </div>
       </div>
 

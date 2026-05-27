@@ -186,7 +186,7 @@ export default function JournalClient() {
   return (
     <div className="app-shell">
       <Sidebar />
-      <main className="journal-main">
+      <main className="journal-main page-enter">
         {/* ── Header ──────────────────────────────────────────── */}
         <div className="page-header">
           <div>

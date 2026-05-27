@@ -17,6 +17,8 @@ import { describeSeason } from '@/lib/theme/engine';
 import { scoreEmotion, type EmotionScore, type EmotionSignals } from '@/lib/emotion';
 import EMOTION_LEXICON from '@/lib/emotion-lexicon.json';
 import { ArrowLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { LiquidGlassIcon } from '@/components/motion/liquid-glass-icon';
 import { ClientStyle } from '@/components/client-style';
 
 interface Message {
@@ -264,7 +266,12 @@ function MessageBubble({ message, streaming, animate, onAnimDone }: BubbleProps)
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: isUser ? 'flex-end' : 'flex-start' }}>
+    <motion.div
+      style={{ display: 'flex', flexDirection: 'column', alignItems: isUser ? 'flex-end' : 'flex-start' }}
+      initial={{ opacity: 0, y: isUser ? 8 : 10, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+    >
       <div className={isUser ? 'bubble-user' : 'bubble-assistant'}>
         {isUser ? (
           <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
@@ -288,7 +295,7 @@ function MessageBubble({ message, streaming, animate, onAnimDone }: BubbleProps)
       {message.ts && !(animate && !isDone) && (
         <span className="msg-time">{relativeTime(message.ts)}</span>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -575,7 +582,7 @@ export default function ChatClient({
         <CrisisScreen level={crisisLevel} trustedName={trustedContactName} onSafe={() => setCrisisLevel(null)} />
       )}
 
-      <div className="page-wrapper">
+      <div className="page-wrapper page-enter">
 
         {/* ════════════════ LEFT PANEL — Voice ════════════════ */}
         <aside className="side-panel side-panel-left">
@@ -746,11 +753,13 @@ export default function ChatClient({
                 disabled={streaming || !input.trim()}
                 className="send-btn"
               >
-                {streaming ? <span className="send-spinner" /> : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-                  </svg>
-                )}
+                <LiquidGlassIcon size="xs" variant="accent" blob={false}>
+                  {streaming ? <span className="send-spinner" /> : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                  )}
+                </LiquidGlassIcon>
               </button>
             </div>
             <p className="disclaimer">Not a substitute for professional care. Crisis? iCall: 9152987821</p>
@@ -1034,7 +1043,12 @@ export default function ChatClient({
         }
 
         .loading-skeleton { display: flex; flex-direction: column; gap: 12px; padding: 1rem 0; }
-        .skeleton-bubble  { height: 48px; background: var(--color-surface); border-radius: var(--radius-lg); animation: shimmer 1.5s ease-in-out infinite; }
+        .skeleton-bubble  {
+          height: 48px;
+          border-radius: var(--radius-lg);
+        }
+        /* Use premium shimmer sweep from globals */
+        .skeleton-bubble.skeleton { }
 
         /* ── Message bubbles ── */
         .bubble-user {
@@ -1043,6 +1057,10 @@ export default function ChatClient({
           border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--color-border));
           border-radius: var(--radius-lg) var(--radius-lg) 4px var(--radius-lg);
           font-size: 14px; line-height: 1.7;
+          transition: box-shadow var(--dur-base) var(--ease-out);
+        }
+        .bubble-user:hover {
+          box-shadow: 0 2px 12px rgba(161, 206, 63, 0.12);
         }
         .bubble-assistant {
           max-width: 85%; padding: 10px 14px;
@@ -1050,6 +1068,7 @@ export default function ChatClient({
           border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) 4px;
           font-size: 14px; line-height: 1.7;
           min-height: 40px;  /* prevents collapsing during typewriter start */
+          transition: box-shadow var(--dur-base) var(--ease-out);
         }
         .bubble-assistant p               { margin: 0 0 0.5em; }
         .bubble-assistant p:last-child    { margin-bottom: 0; }

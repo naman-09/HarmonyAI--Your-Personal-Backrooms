@@ -8,7 +8,11 @@
       "PowerShell(Stop-Process -Id 8944 -Force -ErrorAction SilentlyContinue)",
       "PowerShell(Invoke-RestMethod -Uri \"http://localhost:11434/api/tags\")",
       "PowerShell(try { $r = Invoke-RestMethod -Uri \"http://localhost:11434/api/tags\" -TimeoutSec 3; Write-Host \"Ollama UP — models: $\\(\\($r.models | ForEach-Object { $_.name }\\) -join ', '\\)\" } catch { Write-Host \"Ollama DOWN: $_\" })",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")",
+      "Bash(echo \"---exit:$?---\")",
+      "Bash(git rm *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

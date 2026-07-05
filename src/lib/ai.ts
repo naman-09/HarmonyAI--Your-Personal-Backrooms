@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { safetyCheck } from './safety';
 import { retrieveContext, formatRAGContext } from './rag';
 import type { EmotionSignals } from './emotion';
@@ -16,12 +17,20 @@ const TEMPERATURE = Number(process.env.OLLAMA_TEMPERATURE) || 0.7;
 const MAX_RETRIES = 2;
 const TIMEOUT_MS  = 120_000; // cloud-routed models have cold-start latency; local models are slower
 
+// Gemini is the "smart" model — used as the primary reasoning engine whenever a key
+// is configured. Ollama remains the fallback path for fully offline / self-hosted use.
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_MODEL   = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const gemini = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+
 // Cloud-routed models (e.g. gemma4:31b-cloud) are served by Ollama's cloud backend.
 // They only need Ollama to be reachable — the cloud router handles inference.
 // Local models must be present in the pulled-models list.
 const IS_CLOUD_MODEL = MODEL.endsWith('-cloud') || MODEL.includes(':cloud');
 
 async function canUseConfiguredModel(): Promise<boolean> {
+  if (gemini) return true; // per-call failures are handled by the retry/fallback logic below
+
   try {
     const baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
     const res = await fetch(`${baseUrl}/api/tags`, { signal: AbortSignal.timeout(5000) });
@@ -327,22 +336,54 @@ export async function* streamHarmonyResponse(
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const controller = new AbortController();
-      const timeoutId  = setTimeout(() => controller.abort(), TIMEOUT_MS);
+      let fullResponse: string;
+      let inputTokens: number;
+      let outputTokens: number;
 
-      const completion = await client.chat.completions.create({
-        model:       MODEL,
-        max_tokens:  MAX_TOKENS,
-        temperature: TEMPERATURE,
-        stream:      false,
-        messages:    apiMessages,
-      }, { signal: controller.signal as any });
+      if (gemini) {
+        const model = gemini.getGenerativeModel({
+          model:              GEMINI_MODEL,
+          systemInstruction:  SYSTEM_PROMPT,
+          generationConfig: {
+            maxOutputTokens:  MAX_TOKENS,
+            temperature:      TEMPERATURE,
+            responseMimeType: 'application/json',
+          },
+        });
 
-      clearTimeout(timeoutId);
+        const chat = model.startChat({
+          history: contextWindow.map((m) => ({
+            role:  m.role === 'assistant' ? ('model' as const) : ('user' as const),
+            parts: [{ text: m.content }],
+          })),
+        });
 
-      const fullResponse = completion.choices[0]?.message?.content ?? '';
-      const inputTokens  = completion.usage?.prompt_tokens     ?? 0;
-      const outputTokens = completion.usage?.completion_tokens ?? 0;
+        const controller = new AbortController();
+        const timeoutId   = setTimeout(() => controller.abort(), TIMEOUT_MS);
+        const result       = await chat.sendMessage(userContent);
+        clearTimeout(timeoutId);
+
+        fullResponse  = result.response.text();
+        inputTokens   = result.response.usageMetadata?.promptTokenCount ?? 0;
+        outputTokens  = result.response.usageMetadata?.candidatesTokenCount ?? 0;
+      } else {
+        const controller = new AbortController();
+        const timeoutId  = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+        const completion = await client.chat.completions.create({
+          model:       MODEL,
+          max_tokens:  MAX_TOKENS,
+          temperature: TEMPERATURE,
+          stream:      false,
+          messages:    apiMessages,
+        }, { signal: controller.signal as any });
+
+        clearTimeout(timeoutId);
+
+        fullResponse  = completion.choices[0]?.message?.content ?? '';
+        inputTokens   = completion.usage?.prompt_tokens     ?? 0;
+        outputTokens  = completion.usage?.completion_tokens ?? 0;
+      }
 
       // Extract the clean conversational reply from the model's JSON envelope
       const harmonyJson = tryParseHarmonyResponse(fullResponse);
@@ -433,14 +474,25 @@ Harmony: ${firstAssistantReply.slice(0, 400)}
 Title (3-6 words):`;
 
   try {
-    const res = await client.chat.completions.create({
-      model: MODEL,
-      max_tokens: 24,
-      temperature: 0.4,
-      messages: [{ role: 'user', content: prompt }],
-    }, { timeout: 20_000 });
+    let raw: string;
 
-    const raw = res.choices?.[0]?.message?.content?.trim() ?? '';
+    if (gemini) {
+      const model = gemini.getGenerativeModel({
+        model: GEMINI_MODEL,
+        generationConfig: { maxOutputTokens: 24, temperature: 0.4 },
+      });
+      const result = await model.generateContent(prompt);
+      raw = result.response.text().trim();
+    } else {
+      const res = await client.chat.completions.create({
+        model: MODEL,
+        max_tokens: 24,
+        temperature: 0.4,
+        messages: [{ role: 'user', content: prompt }],
+      }, { timeout: 20_000 });
+      raw = res.choices?.[0]?.message?.content?.trim() ?? '';
+    }
+
     // Strip quotes, leading "Title:" prefix, trailing punctuation
     const cleaned = raw
       .replace(/^["'`]+|["'`]+$/g, '')

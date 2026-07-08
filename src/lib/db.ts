@@ -89,7 +89,30 @@ export const journalEntries = pgTable('journal_entries', {
 }));
 
 // ─── DB instance (Neon serverless HTTP) ──────────────────────
-const sql = neon(process.env.DATABASE_URL!);
-export const db = drizzle(sql as any, {
-  schema: { users, sessions, messages, auditLog, userSettings, journalEntries },
+// Lazily initialize so `neon()` is only called at request time — not at
+// module import time. During `next build` (e.g. "Collecting page data"),
+// route modules are imported without DATABASE_URL set, and eager init would
+// throw "No database connection string was provided to `neon()`".
+const schema = { users, sessions, messages, auditLog, userSettings, journalEntries };
+
+type DrizzleDb = ReturnType<typeof drizzle<typeof schema>>;
+
+let _db: DrizzleDb | null = null;
+
+function getDb(): DrizzleDb {
+  if (!_db) {
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error('DATABASE_URL environment variable is not set');
+    }
+    const sql = neon(connectionString);
+    _db = drizzle(sql as any, { schema });
+  }
+  return _db;
+}
+
+export const db = new Proxy({} as DrizzleDb, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getDb(), prop, receiver);
+  },
 });

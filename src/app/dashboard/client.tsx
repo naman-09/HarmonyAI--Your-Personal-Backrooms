@@ -59,6 +59,7 @@ function todayStr(): string {
 export default function DashboardClient({ userId, isAdmin, userName }: { userId: number; isAdmin?: boolean; userName?: string }) {
   const router = useRouter();
   const userCtx = useUserContext();
+  const prefersReduced = useReducedMotion();
   const [stats,       setStats]       = useState<Stats | null>(null);
   const [todayMood,   setTodayMood]   = useState<TodayJournal | null>(null);
   const [loading,     setLoading]     = useState(true);
@@ -100,7 +101,7 @@ export default function DashboardClient({ userId, isAdmin, userName }: { userId:
 
   // ── Derive headline insight from weekly mood trend ─────────────
   const insight = useMemo(() => {
-    if (!stats) return null;
+    if (!stats || !Array.isArray(stats.weeklyMoods)) return null;
     const moods = stats.weeklyMoods.filter((w) => w.avg > 0).map((w) => w.avg);
     if (moods.length < 2) {
       if (stats.streak >= 7) {
@@ -126,7 +127,6 @@ export default function DashboardClient({ userId, isAdmin, userName }: { userId:
   const greeting   = greetingFor(new Date().getHours());
   const firstName  = userName?.trim().split(/\s+/)[0];
   const todayLevel = todayMood ? MOOD_LEVELS[todayMood.mood - 1] : null;
-  const prefersReduced = useReducedMotion();
 
   return (
     <div className="app-shell">
